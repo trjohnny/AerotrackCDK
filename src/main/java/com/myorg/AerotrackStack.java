@@ -14,11 +14,14 @@ public class AerotrackStack extends Stack {
     public AerotrackStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
-        // The code that defines your stack goes here
-
-        // example resource
-        // final Queue queue = Queue.Builder.create(this, "AerotrackQueue")
-        //         .visibilityTimeout(Duration.seconds(300))
-        //         .build();
+        CodePipeline pipeline = CodePipeline.Builder.create(this, "pipeline")
+            .pipelineName("MyPipeline")
+            .synth(ShellStep.Builder.create("Synth")
+                .input(CodePipelineSource.gitHub("OWNER/REPO", "main"))
+                .commands(Arrays.asList("npm install -g aws-cdk", "cdk synth"))
+                .build())
+            .build();
+        
+        
     }
 }
