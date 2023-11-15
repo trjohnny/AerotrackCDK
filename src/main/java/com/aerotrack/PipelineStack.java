@@ -1,6 +1,6 @@
-package com.myorg;
+package com.aerotrack;
 
-import com.myorg.infrastructure.AppStage;
+import com.aerotrack.infrastructure.AppStage;
 import software.amazon.awscdk.Environment;
 import software.amazon.awscdk.pipelines.*;
 import software.amazon.awscdk.StageProps;
