@@ -10,7 +10,7 @@ public class AerotrackApp {
     public static void main(final String[] args) {
         App app = new App();
 
-        new AerotrackStack(app, "AerotrackStack", StackProps.builder()
+        new PipelineStack(app, "AerotrackStack", StackProps.builder()
                 // If you don't specify 'env', this stack will be environment-agnostic.
                 // Account/Region-dependent features and context lookups will not work,
                 // but a single synthesized template can be deployed anywhere.
