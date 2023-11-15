@@ -25,7 +25,7 @@ public class PipelineStack extends Stack {
                 .build())
             .build();
 
-        StageDeployment alphaStage = pipeline.addStage(new AppStage(this, "alpha", StageProps.builder()
+        StageDeployment alphaStage = pipeline.addStage(new AppStage(this, "Alpha", StageProps.builder()
                 .env(Environment.builder()
                         .account("073873382417")
                         .region("eu-west-1")
@@ -34,7 +34,7 @@ public class PipelineStack extends Stack {
 
         alphaStage.addPost(new ManualApprovalStep("approval"));
 
-        pipeline.addStage(new AppStage(this, "prod", StageProps.builder()
+        pipeline.addStage(new AppStage(this, "Prod", StageProps.builder()
                 .env(Environment.builder()
                         .account("715311622639")
                         .region("eu-west-1")
