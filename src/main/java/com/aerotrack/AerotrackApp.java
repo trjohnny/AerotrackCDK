@@ -8,7 +8,7 @@ public class AerotrackApp {
     public static void main(final String[] args) {
         App app = new App();
 
-        new PipelineStack(app, "AerotrackStack", StackProps.builder()
+        new PipelineStack(app, "PipelineStack", StackProps.builder()
                 // If you don't specify 'env', this stack will be environment-agnostic.
                 // Account/Region-dependent features and context lookups will not work,
                 // but a single synthesized template can be deployed anywhere.
@@ -26,7 +26,7 @@ public class AerotrackApp {
                 // want to deploy the stack to.
 
                 .env(Environment.builder()
-                        .account("073873382417")
+                        .account("789827607242")
                         .region("eu-west-1")
                         .build())
 
