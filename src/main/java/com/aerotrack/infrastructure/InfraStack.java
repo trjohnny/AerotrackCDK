@@ -1,4 +1,4 @@
-package com.myorg.infrastructure;
+package com.aerotrack.infrastructure;
 
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
