@@ -20,12 +20,12 @@ public class PipelineStack extends Stack {
             .pipelineName("AerotrackPipeline")
                 .crossAccountKeys(true)
                 .synth(ShellStep.Builder.create("Synth")
-                .input(CodePipelineSource.gitHub("trjohnny/aerotrack", "mainline"))
+                .input(CodePipelineSource.gitHub("trjohnny/AerotrackCDK", "mainline"))
                 .commands(Arrays.asList("npm install -g aws-cdk", "cdk synth"))
                 .build())
             .build();
 
-        StageDeployment alphaStage = pipeline.addStage(new AppStage(this, "AlphaStage", StageProps.builder()
+        StageDeployment alphaStage = pipeline.addStage(new AppStage(this, "alpha", StageProps.builder()
                 .env(Environment.builder()
                         .account("073873382417")
                         .region("eu-west-1")
@@ -34,7 +34,7 @@ public class PipelineStack extends Stack {
 
         alphaStage.addPost(new ManualApprovalStep("approval"));
 
-        pipeline.addStage(new AppStage(this, "ProdStage", StageProps.builder()
+        pipeline.addStage(new AppStage(this, "prod", StageProps.builder()
                 .env(Environment.builder()
                         .account("715311622639")
                         .region("eu-west-1")
