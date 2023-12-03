@@ -17,9 +17,9 @@ import software.constructs.Construct;
 
 import java.util.List;
 
-import static com.aerotrack.model.Constant.AEROTRACK_BUCKET;
-import static com.aerotrack.model.Constant.AIRPORTS_DEPLOYMENT;
-import static com.aerotrack.model.Constant.FLIGHTS_TABLE;
+import static com.aerotrack.utils.Constant.AEROTRACK_BUCKET;
+import static com.aerotrack.utils.Constant.AIRPORTS_DEPLOYMENT;
+import static com.aerotrack.utils.Constant.FLIGHTS_TABLE;
 
 public class DataConstruct extends Construct {
     protected DataConstruct(JsiiObjectRef objRef) {
@@ -54,7 +54,7 @@ public class DataConstruct extends Construct {
                 .build();
 
         BucketDeployment airportsDeployment = BucketDeployment.Builder.create(this, Utils.getResourceName(AIRPORTS_DEPLOYMENT))
-                .sources(List.of(Source.asset("src/main/java/com/aerotrack/s3resources/")))
+                .sources(List.of(Source.asset("src/main/java/com/aerotrack/infrastructure/s3data/")))
                 .destinationBucket(bucket)
                 .build();
     }
