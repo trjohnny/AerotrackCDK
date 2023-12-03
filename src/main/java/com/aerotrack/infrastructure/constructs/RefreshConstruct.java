@@ -15,9 +15,9 @@ import software.constructs.Construct;
 
 import java.util.List;
 
-import static com.aerotrack.utils.Constant.REFRESH_EVENT_RATE_SECONDS;
-import static com.aerotrack.utils.Constant.REFRESH_EVENT_RULE;
-import static com.aerotrack.utils.Constant.REFRESH_LAMBDA;
+import static com.aerotrack.model.Constant.REFRESH_EVENT_RATE_SECONDS;
+import static com.aerotrack.model.Constant.REFRESH_EVENT_RULE;
+import static com.aerotrack.model.Constant.REFRESH_LAMBDA;
 
 public class RefreshConstruct extends Construct {
     protected RefreshConstruct(JsiiObjectRef objRef) {
@@ -34,7 +34,7 @@ public class RefreshConstruct extends Construct {
         // Define the Lambda function
         Function refreshLambdaFunction = Function.Builder.create(this, Utils.getResourceName(REFRESH_LAMBDA))
                 .runtime(Runtime.JAVA_17)
-                .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
+                .code(Code.fromAsset("src/main/java/com/aerotrack/software/", AssetOptions.builder()
                         .bundling(Utils.getLambdaBuilderOptions()
                                 .command(Utils.getLambdaPackagingInstructions(REFRESH_LAMBDA))
                                 .build())

@@ -21,14 +21,14 @@ import software.amazon.awscdk.services.s3.assets.AssetOptions;
 import software.amazon.jsii.JsiiObjectRef;
 import software.constructs.Construct;
 
-import static com.aerotrack.utils.Constant.API_BURST_LIMIT;
-import static com.aerotrack.utils.Constant.API_KEY;
-import static com.aerotrack.utils.Constant.API_RATE_LIMIT;
-import static com.aerotrack.utils.Constant.QUERY_LAMBDA;
-import static com.aerotrack.utils.Constant.QUERY_LAMBDA_MEMORY_SIZE;
-import static com.aerotrack.utils.Constant.QUERY_LAMBDA_TIMEOUT_SECONDS;
-import static com.aerotrack.utils.Constant.REST_API_GATEWAY;
-import static com.aerotrack.utils.Constant.USAGE_PLAN;
+import static com.aerotrack.model.Constant.API_BURST_LIMIT;
+import static com.aerotrack.model.Constant.API_KEY;
+import static com.aerotrack.model.Constant.API_RATE_LIMIT;
+import static com.aerotrack.model.Constant.QUERY_LAMBDA;
+import static com.aerotrack.model.Constant.QUERY_LAMBDA_MEMORY_SIZE;
+import static com.aerotrack.model.Constant.QUERY_LAMBDA_TIMEOUT_SECONDS;
+import static com.aerotrack.model.Constant.REST_API_GATEWAY;
+import static com.aerotrack.model.Constant.USAGE_PLAN;
 
 public class ApiConstruct extends Construct {
     protected ApiConstruct(JsiiObjectRef objRef) {
@@ -62,7 +62,7 @@ public class ApiConstruct extends Construct {
 
         Function queryFunction = new Function(this, Utils.getResourceName(QUERY_LAMBDA), FunctionProps.builder()
                 .runtime(Runtime.JAVA_17)
-                .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
+                .code(Code.fromAsset("src/main/java/com/aerotrack/software/", AssetOptions.builder()
                         .bundling(Utils.getLambdaBuilderOptions()
                                 .command(Utils.getLambdaPackagingInstructions(QUERY_LAMBDA))
                                 .build())

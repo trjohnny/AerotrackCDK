@@ -7,9 +7,9 @@ import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 import software.constructs.Construct;
 
-import static com.aerotrack.utils.Constant.API_CONSTRUCT;
-import static com.aerotrack.utils.Constant.DATA_CONSTRUCT;
-import static com.aerotrack.utils.Constant.REFRESH_CONSTRUCT;
+import static com.aerotrack.model.Constant.API_CONSTRUCT;
+import static com.aerotrack.model.Constant.DATA_CONSTRUCT;
+import static com.aerotrack.model.Constant.REFRESH_CONSTRUCT;
 public class InfraStack extends Stack {
     public InfraStack(final Construct scope, final String id) {
         this(scope, id, null);
