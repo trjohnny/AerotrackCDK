@@ -13,19 +13,17 @@ public class AerotrackCloudApp {
         App app = new App();
 
         String devEnvironment = System.getenv("AEROTRACK_DEV");
-        if (devEnvironment == null || devEnvironment.isEmpty()) {
-            throw new RuntimeException("Environment variable AEROTRACK_DEV is not set");
+        if (devEnvironment != null && !devEnvironment.isEmpty()) {
+            String stackName = devEnvironment + "-" + INFRA_STACK;
+            // To deploy the personal stack set the environmental variable AEROTRACK_DEV to your name
+            new InfraStack(app, stackName, StackProps.builder()
+                    .env(Environment.builder()
+                            .account("073873382417")
+                            .region("eu-west-1")
+                            .build())
+                    .build());
         }
-        String stackName = devEnvironment + "-" + INFRA_STACK;
 
-        new InfraStack(app, stackName, StackProps.builder()
-                .env(Environment.builder()
-                        .account("073873382417")
-                        .region("eu-west-1")
-                        .build())
-                .build());
-
-        // Assuming you want the same for the PipelineStack as well
         new PipelineStack(app, PIPILINE_STACK, StackProps.builder()
                 .env(Environment.builder()
                         .account("789827607242")
