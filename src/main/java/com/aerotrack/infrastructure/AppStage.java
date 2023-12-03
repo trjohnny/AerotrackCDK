@@ -4,9 +4,6 @@ import software.amazon.awscdk.Stage;
 import software.amazon.awscdk.StageProps;
 import software.constructs.Construct;
 
-// import software.amazon.awscdk.Duration;
-// import software.amazon.awscdk.services.sqs.Queue;
-
 
 public class AppStage extends Stage {
     public AppStage(final Construct scope, final String id) {
