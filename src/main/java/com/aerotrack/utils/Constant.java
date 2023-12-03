@@ -1,4 +1,4 @@
-package com.aerotrack.model;
+package com.aerotrack.utils;
 
 public class Constant {
     public static String QUERY_LAMBDA = "QueryLambda";
