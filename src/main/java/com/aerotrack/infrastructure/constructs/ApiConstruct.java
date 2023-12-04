@@ -31,13 +31,6 @@ import static com.aerotrack.utils.Constant.REST_API_GATEWAY;
 import static com.aerotrack.utils.Constant.USAGE_PLAN;
 
 public class ApiConstruct extends Construct {
-    protected ApiConstruct(JsiiObjectRef objRef) {
-        super(objRef);
-    }
-
-    protected ApiConstruct(InitializationMode initializationMode) {
-        super(initializationMode);
-    }
 
     public ApiConstruct(@NotNull Construct scope, @NotNull String id) {
         super(scope, id);

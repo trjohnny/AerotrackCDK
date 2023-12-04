@@ -3,32 +3,26 @@ package com.aerotrack.infrastructure.constructs;
 import com.aerotrack.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.Duration;
+import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.events.Schedule;
 import software.amazon.awscdk.services.events.targets.LambdaFunction;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
+import software.amazon.awscdk.services.s3.Bucket;
 import software.amazon.awscdk.services.s3.assets.AssetOptions;
 import software.amazon.jsii.JsiiObjectRef;
 import software.constructs.Construct;
 
+import java.util.HashMap;
 import java.util.List;
 
-import static com.aerotrack.utils.Constant.REFRESH_EVENT_RATE_SECONDS;
-import static com.aerotrack.utils.Constant.REFRESH_EVENT_RULE;
-import static com.aerotrack.utils.Constant.REFRESH_LAMBDA;
+import static com.aerotrack.utils.Constant.*;
 
 public class RefreshConstruct extends Construct {
-    protected RefreshConstruct(JsiiObjectRef objRef) {
-        super(objRef);
-    }
 
-    protected RefreshConstruct(InitializationMode initializationMode) {
-        super(initializationMode);
-    }
-
-    public RefreshConstruct(@NotNull Construct scope, @NotNull String id) {
+    public RefreshConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
         super(scope, id);
 
         // Define the Lambda function
@@ -39,11 +33,17 @@ public class RefreshConstruct extends Construct {
                                 .command(Utils.getLambdaPackagingInstructions(REFRESH_LAMBDA))
                                 .build())
                         .build()))
+                .environment(new HashMap<>() {
+                    {
+                        put("flightTable", flightsTable.getTableName());
+                        put("directionBucket", directionBucket.getBucketName());
+                    }
+                })
                 .handler("lambda.RefreshRequestHandler::handleRequest")
                 .build();
 
         // Define the EventBridge rule that triggers the Lambda function
-        Rule refreshEventRule = Rule.Builder.create(this, Utils.getResourceName(REFRESH_EVENT_RULE))
+        Rule.Builder.create(this, Utils.getResourceName(REFRESH_EVENT_RULE))
                 .schedule(Schedule.rate(Duration.seconds(REFRESH_EVENT_RATE_SECONDS)))
                 .targets(List.of(new LambdaFunction(refreshLambdaFunction)))
                 .build();

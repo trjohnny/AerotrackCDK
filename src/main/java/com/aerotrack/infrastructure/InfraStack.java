@@ -18,11 +18,12 @@ public class InfraStack extends Stack {
     public InfraStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
-        new RefreshConstruct(this, REFRESH_CONSTRUCT);
 
         new ApiConstruct(this, API_CONSTRUCT);
 
-        new DataConstruct(this, DATA_CONSTRUCT);
+        DataConstruct data = new DataConstruct(this, DATA_CONSTRUCT);
+
+        new RefreshConstruct(this, REFRESH_CONSTRUCT, data.getDirectionBucket(), data.getFlightsTable());
     }
 
 }

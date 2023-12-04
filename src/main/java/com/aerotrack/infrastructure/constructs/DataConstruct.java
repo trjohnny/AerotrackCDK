@@ -22,40 +22,43 @@ import static com.aerotrack.utils.Constant.AIRPORTS_DEPLOYMENT;
 import static com.aerotrack.utils.Constant.FLIGHTS_TABLE;
 
 public class DataConstruct extends Construct {
-    protected DataConstruct(JsiiObjectRef objRef) {
-        super(objRef);
-    }
-
-    protected DataConstruct(InitializationMode initializationMode) {
-        super(initializationMode);
-    }
-
+    private final Bucket directionBucket;
+    private final Table flightsTable;
     public DataConstruct(@NotNull Construct scope, @NotNull String id) {
         super(scope, id);
 
-        Table flightsTable = Table.Builder.create(this, Utils.getResourceName(FLIGHTS_TABLE))
+        this.flightsTable = Table.Builder.create(this, Utils.getResourceName(FLIGHTS_TABLE))
                 .partitionKey(Attribute.builder()
                         .name("direction")
                         .type(AttributeType.STRING)
                         .build())
                 .sortKey(Attribute.builder()
-                        .name("timestamp")
-                        .type(AttributeType.NUMBER)
+                        .name("departureDateTime")
+                        .type(AttributeType.STRING)
                         .build())
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .deletionProtection(false)
                 .build();
 
-        Bucket bucket = Bucket.Builder.create(this, Utils.getResourceName(AEROTRACK_BUCKET))
+        this.directionBucket = Bucket.Builder.create(this, Utils.getResourceName(AEROTRACK_BUCKET))
                 .objectOwnership(ObjectOwnership.BUCKET_OWNER_ENFORCED)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
                 .encryption(BucketEncryption.S3_MANAGED)
                 .versioned(true)
                 .build();
 
-        BucketDeployment airportsDeployment = BucketDeployment.Builder.create(this, Utils.getResourceName(AIRPORTS_DEPLOYMENT))
+        BucketDeployment.Builder.create(this, Utils.getResourceName(AIRPORTS_DEPLOYMENT))
                 .sources(List.of(Source.asset("src/main/java/com/aerotrack/infrastructure/s3data/")))
-                .destinationBucket(bucket)
+                .destinationBucket(this.directionBucket)
                 .build();
     }
+
+    public Bucket getDirectionBucket() {
+        return directionBucket;
+    }
+
+    public Table getFlightsTable() {
+        return flightsTable;
+    }
+
 }
