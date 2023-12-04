@@ -1,11 +1,9 @@
 {
   "airports":
     [
-      "VCE",
-      "TSF",
-      "TRS",
-      "BST",
-      "VIE",
-      "DUB"
+      {
+        "from": "VCE",
+        "to": "DUB"
+      }
     ]
 }
