@@ -15,6 +15,7 @@ public class Constant {
     public static String REFRESH_CONSTRUCT = "RefreshConstruct";
     public static String API_CONSTRUCT = "ApiConstruct";
     public static String DATA_CONSTRUCT = "DataConstruct";
+    public static String GITHUB_USERNAME = "trjohnny";
     public static Integer QUERY_LAMBDA_MEMORY_SIZE = 128;
     public static Integer QUERY_LAMBDA_TIMEOUT_SECONDS = 10;
     public static Integer REFRESH_EVENT_RATE_SECONDS = 60; // Multiple of 60

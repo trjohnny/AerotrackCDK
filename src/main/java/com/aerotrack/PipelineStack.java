@@ -1,21 +1,16 @@
 package com.aerotrack;
 
 import com.aerotrack.infrastructure.AppStage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import software.amazon.awscdk.Environment;
 import software.amazon.awscdk.pipelines.*;
 import software.amazon.awscdk.StageProps;
 import software.amazon.awscdk.services.codebuild.BuildEnvironment;
 import software.amazon.awscdk.services.codebuild.BuildEnvironmentVariable;
-import software.amazon.awscdk.services.codebuild.BuildSpec;
 import software.amazon.awscdk.services.secretsmanager.Secret;
 import software.constructs.Construct;
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -25,23 +20,13 @@ public class PipelineStack extends Stack {
     public PipelineStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
-        Map<String, Object> buildSpecMap;
-
-        try {
-            String buildSpecJson = Files.readString(Path.of("buildspec.json"));
-            ObjectMapper objectMapper = new ObjectMapper();
-            buildSpecMap = objectMapper.readValue(buildSpecJson, Map.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read build specification", e);
-        }
-
         CodeBuildOptions buildOptions = CodeBuildOptions.builder()
-                .partialBuildSpec(BuildSpec.fromObject(buildSpecMap))
                 .buildEnvironment(BuildEnvironment.builder()
                         .environmentVariables(Map.of(
-                                "GITHUB_USERNAME", BuildEnvironmentVariable.builder().value("trjohnny").build(),
                                 "GITHUB_TOKEN", BuildEnvironmentVariable.builder()
-                                        .value(Secret.fromSecretNameV2(this, "GitHubToken", "github-token").getSecretValue().unsafeUnwrap())
+                                        .value(Secret.fromSecretNameV2(this, "GitHubToken", "github-token")
+                                                .getSecretValue()
+                                                .unsafeUnwrap())
                                         .build()))
                         .build())
                 .build();
