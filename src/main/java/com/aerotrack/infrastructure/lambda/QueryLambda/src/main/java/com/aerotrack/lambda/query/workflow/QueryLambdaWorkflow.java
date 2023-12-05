@@ -16,7 +16,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class QueryLambdaWorkflow {
@@ -33,29 +35,34 @@ public class QueryLambdaWorkflow {
 
     public ScanQueryResponse queryAndProcessFlights(ScanQueryRequest request) {
         List<FlightPair> flightPairs = new ArrayList<>();
+        Map<String, List<Flight>> allReturnFlights = new HashMap<>();
 
-        // Populate lists for outbound and return flights
+        // Pre-fetch return flights if not returning to the same airport
+        if (!request.getReturnToSameAirport()) {
+            for (String destination : request.getDestinationAirports()) {
+                List<Flight> returnFlightsForDestination = new ArrayList<>();
+                for (String returnDeparture : request.getDepartureAirports()) {
+                    returnFlightsForDestination.addAll(scanFlights(destination, returnDeparture,
+                            request.getAvailabilityStart(), request.getAvailabilityEnd()));
+                }
+                allReturnFlights.put(destination, returnFlightsForDestination);
+            }
+        }
+
+        // Process outbound and return flights
         for (String departure : request.getDepartureAirports()) {
             for (String destination : request.getDestinationAirports()) {
-
                 List<Flight> outboundFlights = scanFlights(departure, destination,
-                        request.getAvailabilityStart(),
-                        request.getAvailabilityEnd());
+                        request.getAvailabilityStart(), request.getAvailabilityEnd());
 
-                log.info("Outbound flights:  [{}]", outboundFlights);
-
-                List<Flight> returnFlights = request.getReturnToSameAirport() ? scanFlights(destination, departure,
-                        request.getAvailabilityStart(),
-                        request.getAvailabilityEnd()) :
-                        new ArrayList<>();
-
-                log.info("Return flights:  [{}]", returnFlights);
+                List<Flight> returnFlights = request.getReturnToSameAirport() ?
+                        scanFlights(destination, departure, request.getAvailabilityStart(), request.getAvailabilityEnd()) :
+                        allReturnFlights.getOrDefault(destination, new ArrayList<>());
 
                 // Find matching pairs
                 for (Flight outboundFlight : outboundFlights) {
                     for (Flight returnFlight : returnFlights) {
                         int duration = calculateDuration(outboundFlight, returnFlight);
-
                         if (duration >= request.getMinDays() && duration <= request.getMaxDays()) {
                             int totalPrice = (int) (outboundFlight.getPrice() + returnFlight.getPrice());
                             flightPairs.add(new FlightPair(outboundFlight, returnFlight, totalPrice));
@@ -75,7 +82,9 @@ public class QueryLambdaWorkflow {
                 .build();
     }
 
-    public List<Flight> scanFlights(String departure, String destination, String availabilityStart, String availabilityEnd) {
+
+
+    private List<Flight> scanFlights(String departure, String destination, String availabilityStart, String availabilityEnd) {
         String partitionKey = departure + "-" + destination;
         Key startKey = Key.builder().partitionValue(partitionKey).sortValue(availabilityStart).build();
         Key endKey = Key.builder().partitionValue(partitionKey).sortValue(availabilityEnd).build();
