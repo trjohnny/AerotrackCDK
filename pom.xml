@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.aerotrack</groupId>
-    <artifactId>AerotrackCDK</artifactId>
+    <artifactId>AerotrackInfrastructure</artifactId>
     <version>0.1</version>
 
     <properties>
