@@ -19,6 +19,7 @@ public class Flight {
     private String direction;
     private String departureDateTime;
     private String arrivalDateTime;
+    private String flightNumber;
     private double price;
 
     @DynamoDbSortKey

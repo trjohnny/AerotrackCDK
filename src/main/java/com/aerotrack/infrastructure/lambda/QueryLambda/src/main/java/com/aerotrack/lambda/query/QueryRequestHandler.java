@@ -32,7 +32,7 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
             response.setHeaders(Map.of("Content-Type", "application/json"));
             response.setBody(objectMapper.writeValueAsString(scanQueryResponse));
         } catch (Exception e) {
-            context.getLogger().log("Error: " + e.getMessage());
+            log.error(e.getMessage());
             response.setStatusCode(500);
             response.setHeaders(Map.of("Content-Type", "application/json"));
             response.setBody("{\"error\": \"" + e.getMessage() + "\"}");
