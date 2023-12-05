@@ -24,7 +24,7 @@ import java.util.Map;
 public class QueryLambdaWorkflow {
     private final DynamoDbTable<Flight> flightTable;
     static final TableSchema<Flight> FLIGHT_TABLE_SCHEMA = TableSchema.fromClass(Flight.class);
-    private static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
+    static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
 
 
     public QueryLambdaWorkflow(DynamoDbEnhancedClient dynamoDbEnhancedClient) {
@@ -55,18 +55,23 @@ public class QueryLambdaWorkflow {
                 List<Flight> outboundFlights = scanFlights(departure, destination,
                         request.getAvailabilityStart(), request.getAvailabilityEnd());
 
+                log.info(outboundFlights.toString());
+
                 List<Flight> returnFlights = request.getReturnToSameAirport() ?
                         scanFlights(destination, departure, request.getAvailabilityStart(), request.getAvailabilityEnd()) :
                         allReturnFlights.getOrDefault(destination, new ArrayList<>());
+
+                log.info(returnFlights.toString());
 
                 // Find matching pairs
                 for (Flight outboundFlight : outboundFlights) {
                     for (Flight returnFlight : returnFlights) {
                         int duration = calculateDuration(outboundFlight, returnFlight);
-                        if (duration >= request.getMinDays() && duration <= request.getMaxDays()) {
-                            int totalPrice = (int) (outboundFlight.getPrice() + returnFlight.getPrice());
-                            flightPairs.add(new FlightPair(outboundFlight, returnFlight, totalPrice));
-                        }
+                        if (duration < request.getMinDays()) continue;
+                        if (duration > request.getMaxDays()) break;
+
+                        int totalPrice = (int) (outboundFlight.getPrice() + returnFlight.getPrice());
+                        flightPairs.add(new FlightPair(outboundFlight, returnFlight, totalPrice));
                     }
                 }
             }
