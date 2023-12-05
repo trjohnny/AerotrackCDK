@@ -39,6 +39,7 @@ public class ApiConstruct extends Construct {
     private static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
     private static final String DIRECTION_BUCKET_ENV_VAR = "DIRECTION_BUCKET";
     private static final String SCAN_RESOURCE = "scan";
+    ckjsnkdjnskdc
 
     public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
         super(scope, id);
