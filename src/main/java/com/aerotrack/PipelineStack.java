@@ -41,7 +41,7 @@ public class PipelineStack extends Stack {
                         .environmentVariables(Map.of(
                                 "GITHUB_USERNAME", BuildEnvironmentVariable.builder().value("trjohnny").build(),
                                 "GITHUB_TOKEN", BuildEnvironmentVariable.builder()
-                                        .value(Secret.fromSecretNameV2(this, "GitHubToken", "github-token").getSecretValue().toString())
+                                        .value(Secret.fromSecretNameV2(this, "GitHubToken", "github-token").getSecretValue().unsafeUnwrap())
                                         .build()))
                         .build())
                 .build();
