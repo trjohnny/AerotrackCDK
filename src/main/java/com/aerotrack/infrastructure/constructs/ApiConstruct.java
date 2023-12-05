@@ -59,7 +59,7 @@ public class ApiConstruct extends Construct {
                         .build())
                 .build();
 
-        usagePlan.addApiKey(key);
+        usagePlan.addApiKey(key); // Key
 
         Function queryFunction = new Function(this, Utils.getResourceName(QUERY_LAMBDA), FunctionProps.builder()
                 .runtime(Runtime.JAVA_17)
