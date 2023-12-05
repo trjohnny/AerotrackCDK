@@ -20,7 +20,7 @@ public class PipelineStack extends Stack {
             .pipelineName("AerotrackPipeline")
                 .crossAccountKeys(true)
                 .synth(ShellStep.Builder.create("Synth")
-                .input(CodePipelineSource.gitHub("trjohnny/AerotrackCDK", "mainline"))
+                .input(CodePipelineSource.gitHub("trjohnny/AerotrackInfrastructure", "mainline"))
                 .commands(Arrays.asList("npm install -g aws-cdk", "cdk synth"))
                 .build())
             .build();
