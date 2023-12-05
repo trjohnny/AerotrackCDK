@@ -8,6 +8,7 @@ import software.amazon.awscdk.StageProps;
 import software.amazon.awscdk.services.codebuild.BuildEnvironment;
 import software.amazon.awscdk.services.codebuild.BuildEnvironmentVariable;
 import software.amazon.awscdk.services.codebuild.BuildSpec;
+import software.amazon.awscdk.services.secretsmanager.Secret;
 import software.constructs.Construct;
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
@@ -39,7 +40,9 @@ public class PipelineStack extends Stack {
                 .buildEnvironment(BuildEnvironment.builder()
                         .environmentVariables(Map.of(
                                 "GITHUB_USERNAME", BuildEnvironmentVariable.builder().value("trjohnny").build(),
-                                "GITHUB_TOKEN", BuildEnvironmentVariable.builder().value("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").build()))
+                                "GITHUB_TOKEN", BuildEnvironmentVariable.builder()
+                                        .value(Secret.fromSecretNameV2(this, "GitHubToken", "github-token").getSecretValue().toString())
+                                        .build()))
                         .build())
                 .build();
 
