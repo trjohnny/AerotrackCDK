@@ -12,14 +12,17 @@ import software.amazon.awscdk.services.apigateway.Resource;
 import software.amazon.awscdk.services.apigateway.RestApi;
 import software.amazon.awscdk.services.apigateway.ThrottleSettings;
 import software.amazon.awscdk.services.apigateway.UsagePlan;
+import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.FunctionProps;
 import software.amazon.awscdk.services.lambda.Runtime;
 import software.amazon.awscdk.services.logs.RetentionDays;
+import software.amazon.awscdk.services.s3.Bucket;
 import software.amazon.awscdk.services.s3.assets.AssetOptions;
-import software.amazon.jsii.JsiiObjectRef;
 import software.constructs.Construct;
+
+import java.util.HashMap;
 
 import static com.aerotrack.utils.Constant.API_BURST_LIMIT;
 import static com.aerotrack.utils.Constant.API_KEY;
@@ -32,7 +35,12 @@ import static com.aerotrack.utils.Constant.USAGE_PLAN;
 
 public class ApiConstruct extends Construct {
 
-    public ApiConstruct(@NotNull Construct scope, @NotNull String id) {
+
+    private static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
+    private static final String DIRECTION_BUCKET_ENV_VAR = "DIRECTION_BUCKET";
+    private static final String SCAN_RESOURCE = "scan";
+
+    public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
         super(scope, id);
 
         RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(REST_API_GATEWAY))
@@ -60,6 +68,12 @@ public class ApiConstruct extends Construct {
                                 .command(Utils.getLambdaPackagingInstructions(QUERY_LAMBDA))
                                 .build())
                         .build()))
+                .environment(new HashMap<>() {
+                    {
+                        put(FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
+                        put(DIRECTION_BUCKET_ENV_VAR, directionBucket.getBucketName());
+                    }
+                })
                 .handler("lambda.QueryRequestHandler::handleRequest")
                 .memorySize(QUERY_LAMBDA_MEMORY_SIZE)
                 .timeout(Duration.seconds(QUERY_LAMBDA_TIMEOUT_SECONDS))
@@ -68,7 +82,7 @@ public class ApiConstruct extends Construct {
 
         LambdaIntegration lambdaIntegration = new LambdaIntegration(queryFunction);
 
-        Resource queryResource = queryRestApi.getRoot().addResource("scan");
+        Resource queryResource = queryRestApi.getRoot().addResource(SCAN_RESOURCE);
 
         // Add a method (e.g., GET) to the resource that is integrated with the Lambda function
         queryResource.addMethod("GET", lambdaIntegration, MethodOptions.builder()

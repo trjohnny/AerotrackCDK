@@ -19,9 +19,9 @@ public class InfraStack extends Stack {
         super(scope, id, props);
 
 
-        new ApiConstruct(this, API_CONSTRUCT);
-
         DataConstruct data = new DataConstruct(this, DATA_CONSTRUCT);
+
+        new ApiConstruct(this, API_CONSTRUCT, data.getDirectionBucket(), data.getFlightsTable());
 
         new RefreshConstruct(this, REFRESH_CONSTRUCT, data.getDirectionBucket(), data.getFlightsTable());
     }
