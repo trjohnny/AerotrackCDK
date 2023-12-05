@@ -1,6 +1,7 @@
 package com.aerotrack.infrastructure.constructs;
 
 import com.aerotrack.utils.Utils;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.services.dynamodb.Attribute;
 import software.amazon.awscdk.services.dynamodb.AttributeType;
@@ -12,7 +13,6 @@ import software.amazon.awscdk.services.s3.BucketEncryption;
 import software.amazon.awscdk.services.s3.ObjectOwnership;
 import software.amazon.awscdk.services.s3.deployment.BucketDeployment;
 import software.amazon.awscdk.services.s3.deployment.Source;
-import software.amazon.jsii.JsiiObjectRef;
 import software.constructs.Construct;
 
 import java.util.List;
@@ -21,6 +21,7 @@ import static com.aerotrack.utils.Constant.AEROTRACK_BUCKET;
 import static com.aerotrack.utils.Constant.AIRPORTS_DEPLOYMENT;
 import static com.aerotrack.utils.Constant.FLIGHTS_TABLE;
 
+@Getter
 public class DataConstruct extends Construct {
     private final Bucket directionBucket;
     private final Table flightsTable;
@@ -51,14 +52,6 @@ public class DataConstruct extends Construct {
                 .sources(List.of(Source.asset("src/main/java/com/aerotrack/infrastructure/s3data/")))
                 .destinationBucket(this.directionBucket)
                 .build();
-    }
-
-    public Bucket getDirectionBucket() {
-        return directionBucket;
-    }
-
-    public Table getFlightsTable() {
-        return flightsTable;
     }
 
 }

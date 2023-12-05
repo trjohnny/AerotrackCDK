@@ -22,11 +22,12 @@ import java.util.List;
 public class QueryLambdaWorkflow {
     private final DynamoDbTable<Flight> flightTable;
     static final TableSchema<Flight> FLIGHT_TABLE_SCHEMA = TableSchema.fromClass(Flight.class);
+    private static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
 
 
     public QueryLambdaWorkflow(DynamoDbEnhancedClient dynamoDbEnhancedClient) {
         this.flightTable = dynamoDbEnhancedClient.table(
-                "Giovanni-InfraStack-DataConstructGiovanniFlightsTable4DEB1F4C-9KRMSFT8UPQO",
+                System.getenv(FLIGHT_TABLE_ENV_VAR),
                 FLIGHT_TABLE_SCHEMA);
     }
 
