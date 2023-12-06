@@ -24,59 +24,50 @@ import software.constructs.Construct;
 
 import java.util.HashMap;
 
-import static com.aerotrack.utils.Constant.API_BURST_LIMIT;
-import static com.aerotrack.utils.Constant.API_KEY;
-import static com.aerotrack.utils.Constant.API_RATE_LIMIT;
-import static com.aerotrack.utils.Constant.QUERY_LAMBDA;
-import static com.aerotrack.utils.Constant.QUERY_LAMBDA_MEMORY_SIZE;
-import static com.aerotrack.utils.Constant.QUERY_LAMBDA_TIMEOUT_SECONDS;
-import static com.aerotrack.utils.Constant.REST_API_GATEWAY;
-import static com.aerotrack.utils.Constant.USAGE_PLAN;
+import com.aerotrack.utils.Constant;
+
 
 public class ApiConstruct extends Construct {
 
-
-    private static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
-    private static final String DIRECTION_BUCKET_ENV_VAR = "DIRECTION_BUCKET";
     private static final String SCAN_RESOURCE = "scan";
 
     public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
         super(scope, id);
 
-        RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(REST_API_GATEWAY))
+        RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(Constant.REST_API_GATEWAY))
                 .defaultCorsPreflightOptions(CorsOptions.builder()
                         .allowOrigins(Cors.ALL_ORIGINS)
                         .allowMethods(Cors.ALL_METHODS)
                         .build())
                 .build();
 
-        ApiKey key = ApiKey.Builder.create(this, API_KEY).build();
+        ApiKey key = ApiKey.Builder.create(this, Constant.API_KEY).build();
 
-        UsagePlan usagePlan = UsagePlan.Builder.create(this, Utils.getResourceName(USAGE_PLAN))
+        UsagePlan usagePlan = UsagePlan.Builder.create(this, Utils.getResourceName(Constant.USAGE_PLAN))
                 .throttle(ThrottleSettings.builder()
-                        .burstLimit(API_BURST_LIMIT)
-                        .rateLimit(API_RATE_LIMIT)
+                        .burstLimit(Constant.API_BURST_LIMIT)
+                        .rateLimit(Constant.API_RATE_LIMIT)
                         .build())
                 .build();
 
         usagePlan.addApiKey(key); // Key
 
-        Function queryFunction = new Function(this, Utils.getResourceName(QUERY_LAMBDA), FunctionProps.builder()
+        Function queryFunction = new Function(this, Utils.getResourceName(Constant.QUERY_LAMBDA), FunctionProps.builder()
                 .runtime(Runtime.JAVA_17)
                 .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
                         .bundling(Utils.getLambdaBuilderOptions()
-                                .command(Utils.getLambdaPackagingInstructions(QUERY_LAMBDA))
+                                .command(Utils.getLambdaPackagingInstructions(Constant.QUERY_LAMBDA))
                                 .build())
                         .build()))
                 .environment(new HashMap<>() {
                     {
-                        put(FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
-                        put(DIRECTION_BUCKET_ENV_VAR, directionBucket.getBucketName());
+                        put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
+                        put(Constant.DIRECTION_BUCKET_ENV_VAR, directionBucket.getBucketName());
                     }
                 })
                 .handler("lambda.QueryRequestHandler::handleRequest")
-                .memorySize(QUERY_LAMBDA_MEMORY_SIZE)
-                .timeout(Duration.seconds(QUERY_LAMBDA_TIMEOUT_SECONDS))
+                .memorySize(Constant.QUERY_LAMBDA_MEMORY_SIZE)
+                .timeout(Duration.seconds(Constant.QUERY_LAMBDA_TIMEOUT_SECONDS))
                 .logRetention(RetentionDays.ONE_DAY)
                 .build());
 
