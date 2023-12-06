@@ -7,6 +7,8 @@ import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.events.Schedule;
 import software.amazon.awscdk.services.events.targets.LambdaFunction;
+import software.amazon.awscdk.services.iam.Role;
+import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
@@ -19,11 +21,21 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.aerotrack.utils.Constant.*;
+import static com.aerotrack.utils.Utils.isPersonalDeployment;
+
 
 public class RefreshConstruct extends Construct {
 
+
     public RefreshConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
         super(scope, id);
+
+        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(REFRESH_LAMBDA_ROLE))
+                .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
+                .build();
+
+        directionBucket.grantRead(lambdaRole);
+        flightsTable.grantWriteData(lambdaRole);
 
         // Define the Lambda function
         Function refreshLambdaFunction = Function.Builder.create(this, Utils.getResourceName(REFRESH_LAMBDA))
@@ -35,18 +47,18 @@ public class RefreshConstruct extends Construct {
                         .build()))
                 .environment(new HashMap<>() {
                     {
-                        put("flightTable", flightsTable.getTableName());
-                        put("directionBucket", directionBucket.getBucketName());
+                        put("FLIGHT_TABLE", flightsTable.getTableName());
+                        put("DIRECTION_BUCKET", directionBucket.getBucketName());
                     }
                 })
+                .role(lambdaRole)
                 .handler("lambda.RefreshRequestHandler::handleRequest")
                 .build();
 
-        // Define the EventBridge rule that triggers the Lambda function
-        Rule.Builder.create(this, Utils.getResourceName(REFRESH_EVENT_RULE))
+        if(!isPersonalDeployment())
+            Rule.Builder.create(this, Utils.getResourceName(REFRESH_EVENT_RULE))
                 .schedule(Schedule.rate(Duration.seconds(REFRESH_EVENT_RATE_SECONDS)))
                 .targets(List.of(new LambdaFunction(refreshLambdaFunction)))
                 .build();
-
     }
 }

@@ -40,6 +40,11 @@ public class Utils {
         return devEnvironment + "-" + resource;
     }
 
+    public static boolean isPersonalDeployment() {
+        String devEnvironment = System.getenv("AEROTRACK_DEV");
+        return devEnvironment != null && !devEnvironment.isEmpty();
+    }
+
     public static List<String> getLambdaPackagingInstructions(String lambda) {
         return Arrays.asList(
                 "/bin/sh",

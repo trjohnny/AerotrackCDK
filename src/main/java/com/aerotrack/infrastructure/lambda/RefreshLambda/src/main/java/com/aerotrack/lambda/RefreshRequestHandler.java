@@ -1,4 +1,4 @@
-package lambda;
+package com.aerotrack.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
@@ -11,10 +11,8 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -22,16 +20,15 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
-import java.util.stream.Collectors;
 
-import models.Flight;
+import com.aerotrack.model.Flight;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 
-import static utils.Constants.*;
+import static com.aerotrack.utils.Constants.*;
 
 
 public class RefreshRequestHandler implements RequestHandler<ScheduledEvent, Void> {
@@ -42,7 +39,7 @@ public class RefreshRequestHandler implements RequestHandler<ScheduledEvent, Voi
 
         LambdaLogger logger = context.getLogger();
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().build();
-        S3Object s3Object = s3Client.getObject(System.getenv("directionBucket"), "airports.json");
+        S3Object s3Object = s3Client.getObject(System.getenv("DIRECTION_BUCKET"), "airports.json");
 
         try(InputStream objectData = s3Object.getObjectContent()) {
             String jsonContent = IOUtils.toString(objectData, StandardCharsets.UTF_8);
@@ -92,7 +89,7 @@ public class RefreshRequestHandler implements RequestHandler<ScheduledEvent, Voi
                         JSONArray flights = date.optJSONArray("flights");
                         if (flights != null && !flights.isEmpty()) {
                             DynamoDbEnhancedClient enhancedClient = DynamoDbEnhancedClient.create();
-                            DynamoDbTable<Flight> customerMappedTable = enhancedClient.table(System.getenv("flightTable"), TableSchema.fromBean(Flight.class));
+                            DynamoDbTable<Flight> customerMappedTable = enhancedClient.table(System.getenv("FLIGHT_TABLE"), TableSchema.fromBean(Flight.class));
 
                             WriteBatch.Builder<Flight> builder = WriteBatch.builder(Flight.class).mappedTableResource(customerMappedTable);
                             for (int i = 0; i < flights.length(); i++) {
