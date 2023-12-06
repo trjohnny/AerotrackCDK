@@ -20,7 +20,7 @@ import software.constructs.Construct;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.aerotrack.utils.Constant.*;
+import com.aerotrack.utils.Constant;
 import static com.aerotrack.utils.Utils.isPersonalDeployment;
 
 
@@ -30,7 +30,7 @@ public class RefreshConstruct extends Construct {
     public RefreshConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
         super(scope, id);
 
-        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(REFRESH_LAMBDA_ROLE))
+        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constant.REFRESH_LAMBDA_ROLE))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .build();
 
@@ -38,26 +38,26 @@ public class RefreshConstruct extends Construct {
         flightsTable.grantWriteData(lambdaRole);
 
         // Define the Lambda function
-        Function refreshLambdaFunction = Function.Builder.create(this, Utils.getResourceName(REFRESH_LAMBDA))
+        Function refreshLambdaFunction = Function.Builder.create(this, Utils.getResourceName(Constant.REFRESH_LAMBDA))
                 .runtime(Runtime.JAVA_17)
                 .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
                         .bundling(Utils.getLambdaBuilderOptions()
-                                .command(Utils.getLambdaPackagingInstructions(REFRESH_LAMBDA))
+                                .command(Utils.getLambdaPackagingInstructions(Constant.REFRESH_LAMBDA))
                                 .build())
                         .build()))
                 .environment(new HashMap<>() {
                     {
-                        put("FLIGHT_TABLE", flightsTable.getTableName());
-                        put("DIRECTION_BUCKET", directionBucket.getBucketName());
+                        put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
+                        put(Constant.DIRECTION_BUCKET_ENV_VAR, directionBucket.getBucketName());
                     }
                 })
                 .role(lambdaRole)
-                .handler("lambda.RefreshRequestHandler::handleRequest")
+                .handler("com.aerotrack.lambda.RefreshRequestHandler::handleRequest")
                 .build();
 
         if(!isPersonalDeployment())
-            Rule.Builder.create(this, Utils.getResourceName(REFRESH_EVENT_RULE))
-                .schedule(Schedule.rate(Duration.seconds(REFRESH_EVENT_RATE_SECONDS)))
+            Rule.Builder.create(this, Utils.getResourceName(Constant.REFRESH_EVENT_RULE))
+                .schedule(Schedule.rate(Duration.seconds(Constant.REFRESH_EVENT_RATE_SECONDS)))
                 .targets(List.of(new LambdaFunction(refreshLambdaFunction)))
                 .build();
     }
