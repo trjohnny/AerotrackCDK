@@ -5,6 +5,9 @@ import software.amazon.awscdk.App;
 import software.amazon.awscdk.Environment;
 import software.amazon.awscdk.StackProps;
 
+import static com.aerotrack.utils.Utils.getResourceName;
+import static com.aerotrack.utils.Utils.isPersonalDeployment;
+
 public class AerotrackCloudApp {
     public static String PIPILINE_STACK = "PipelineStack";
     public static String INFRA_STACK = "InfraStack";
@@ -12,9 +15,8 @@ public class AerotrackCloudApp {
     public static void main(final String[] args) {
         App app = new App();
 
-        String devEnvironment = System.getenv("AEROTRACK_DEV");
-        if (devEnvironment != null && !devEnvironment.isEmpty()) {
-            String stackName = devEnvironment + "-" + INFRA_STACK;
+        if (isPersonalDeployment()) {
+            String stackName = getResourceName(INFRA_STACK);
             // To deploy the personal stack set the environmental variable AEROTRACK_DEV to your name
             new InfraStack(app, stackName, StackProps.builder()
                     .env(Environment.builder()

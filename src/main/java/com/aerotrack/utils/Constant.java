@@ -3,6 +3,7 @@ package com.aerotrack.utils;
 public class Constant {
     public static String QUERY_LAMBDA = "QueryLambda";
     public static String REFRESH_LAMBDA = "RefreshLambda";
+    public static String REFRESH_LAMBDA_ROLE = "RefreshLambdaRole";
     public static String REST_API_GATEWAY = "RestApiGateway";
     public static String USAGE_PLAN = "UsagePlan";
     public static String API_KEY = "ApiKey";
