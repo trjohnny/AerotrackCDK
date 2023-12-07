@@ -59,25 +59,23 @@
             <version>20231013</version>
         </dependency>
 
+        <!-- Log4J -->
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.25</version>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
         </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.25</version>
+            <version>2.0.9</version>
         </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-lambda-java-log4j</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-model</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.2</version>
         </dependency>
 
     </dependencies>
