@@ -4,6 +4,10 @@
       {
         "from": "VCE",
         "to": "DUB"
+      },
+      {
+        "from": "DUB",
+        "to": "VCE"
       }
     ]
 }
