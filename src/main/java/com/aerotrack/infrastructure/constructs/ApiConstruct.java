@@ -10,9 +10,18 @@ import software.amazon.awscdk.services.apigateway.LambdaIntegration;
 import software.amazon.awscdk.services.apigateway.MethodOptions;
 import software.amazon.awscdk.services.apigateway.Resource;
 import software.amazon.awscdk.services.apigateway.RestApi;
+import software.amazon.awscdk.services.apigateway.Stage;
 import software.amazon.awscdk.services.apigateway.ThrottleSettings;
+import software.amazon.awscdk.services.apigateway.ThrottlingPerMethod;
 import software.amazon.awscdk.services.apigateway.UsagePlan;
+import software.amazon.awscdk.services.apigateway.UsagePlanPerApiStage;
 import software.amazon.awscdk.services.dynamodb.Table;
+import software.amazon.awscdk.services.iam.Effect;
+import software.amazon.awscdk.services.iam.ManagedPolicy;
+import software.amazon.awscdk.services.iam.PolicyDocument;
+import software.amazon.awscdk.services.iam.PolicyStatement;
+import software.amazon.awscdk.services.iam.Role;
+import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.FunctionProps;
@@ -23,6 +32,7 @@ import software.amazon.awscdk.services.s3.assets.AssetOptions;
 import software.constructs.Construct;
 
 import java.util.HashMap;
+import java.util.List;
 
 import com.aerotrack.utils.Constant;
 
@@ -33,6 +43,16 @@ public class ApiConstruct extends Construct {
 
     public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
         super(scope, id);
+
+        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constant.QUERY_LAMBDA_ROLE))
+                .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
+                .managedPolicies(List.of(
+                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+                ))
+                .build();
+
+        directionBucket.grantRead(lambdaRole);
+        flightsTable.grantReadData(lambdaRole);
 
         RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(Constant.REST_API_GATEWAY))
                 .defaultCorsPreflightOptions(CorsOptions.builder()
@@ -50,7 +70,11 @@ public class ApiConstruct extends Construct {
                         .build())
                 .build();
 
-        usagePlan.addApiKey(key); // Key
+        usagePlan.addApiStage(UsagePlanPerApiStage.builder()
+                .stage(queryRestApi.getDeploymentStage())
+                .build());
+
+        usagePlan.addApiKey(key);
 
         Function queryFunction = new Function(this, Utils.getResourceName(Constant.QUERY_LAMBDA), FunctionProps.builder()
                 .runtime(Runtime.JAVA_17)
@@ -65,7 +89,8 @@ public class ApiConstruct extends Construct {
                         put(Constant.DIRECTION_BUCKET_ENV_VAR, directionBucket.getBucketName());
                     }
                 })
-                .handler("lambda.QueryRequestHandler::handleRequest")
+                .handler("com.aerotrack.lambda.query.QueryRequestHandler::handleRequest")
+                .role(lambdaRole)
                 .memorySize(Constant.QUERY_LAMBDA_MEMORY_SIZE)
                 .timeout(Duration.seconds(Constant.QUERY_LAMBDA_TIMEOUT_SECONDS))
                 .logRetention(RetentionDays.ONE_DAY)
@@ -76,7 +101,7 @@ public class ApiConstruct extends Construct {
         Resource queryResource = queryRestApi.getRoot().addResource(SCAN_RESOURCE);
 
         // Add a method (e.g., GET) to the resource that is integrated with the Lambda function
-        queryResource.addMethod("GET", lambdaIntegration, MethodOptions.builder()
+        queryResource.addMethod("POST", lambdaIntegration, MethodOptions.builder()
                 .apiKeyRequired(true)
                 .build());
     }
