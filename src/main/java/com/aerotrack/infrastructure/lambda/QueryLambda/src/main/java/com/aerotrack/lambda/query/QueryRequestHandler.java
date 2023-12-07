@@ -19,6 +19,7 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient = DynamoDbEnhancedClient.create();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final QueryLambdaWorkflow queryLambdaWorkflow = new QueryLambdaWorkflow(dynamoDbEnhancedClient);
+
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();

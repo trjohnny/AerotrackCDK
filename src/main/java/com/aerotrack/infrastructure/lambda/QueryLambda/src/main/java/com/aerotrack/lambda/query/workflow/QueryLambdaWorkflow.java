@@ -55,13 +55,13 @@ public class QueryLambdaWorkflow {
                 List<Flight> outboundFlights = scanFlights(departure, destination,
                         request.getAvailabilityStart(), request.getAvailabilityEnd());
 
-                log.info(outboundFlights.toString());
+                log.debug(outboundFlights.toString());
 
                 List<Flight> returnFlights = request.getReturnToSameAirport() ?
                         scanFlights(destination, departure, request.getAvailabilityStart(), request.getAvailabilityEnd()) :
                         allReturnFlights.getOrDefault(destination, new ArrayList<>());
 
-                log.info(returnFlights.toString());
+                log.debug(returnFlights.toString());
 
                 // Find matching pairs
                 for (Flight outboundFlight : outboundFlights) {
@@ -94,6 +94,7 @@ public class QueryLambdaWorkflow {
         Key startKey = Key.builder().partitionValue(partitionKey).sortValue(availabilityStart).build();
         Key endKey = Key.builder().partitionValue(partitionKey).sortValue(availabilityEnd).build();
 
+        log.info("Querying DynamoDb on table: {}", flightTable.tableName());
         return flightTable.query(QueryConditional.sortBetween(startKey, endKey))
                 .items()
                 .stream()
