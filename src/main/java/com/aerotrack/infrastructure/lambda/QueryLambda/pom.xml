@@ -10,9 +10,14 @@
 
     <repositories>
         <repository>
-            <id>github</id>
-            <name>GitHub Apache Maven Packages</name>
+            <id>github-model</id>
+            <name>Aerotrack Model</name>
             <url>https://maven.pkg.github.com/trjohnny/AerotrackModel</url>
+        </repository>
+        <repository>
+            <id>github-utils</id>
+            <name>Aerotrack Utils</name>
+            <url>https://maven.pkg.github.com/trjohnny/AerotrackUtils</url>
         </repository>
     </repositories>
 
@@ -88,6 +93,12 @@
             <artifactId>dynamodb</artifactId>
             <version>2.21.37</version>
         </dependency>
+        <!-- Json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
+        </dependency>
         <!-- AWS SDK Enhanced DynamoDB -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -110,6 +121,12 @@
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-model</artifactId>
             <version>1.0.3</version>
+        </dependency>
+        <!-- Aerotrack Utils -->
+        <dependency>
+            <groupId>com.aerotrack</groupId>
+            <artifactId>aerotrack-utils</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 
