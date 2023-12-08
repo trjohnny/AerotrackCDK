@@ -10,14 +10,9 @@
 
     <repositories>
         <repository>
-            <id>github-model</id>
+            <id>github</id>
             <name>Aerotrack Model</name>
-            <url>https://maven.pkg.github.com/trjohnny/AerotrackModel</url>
-        </repository>
-        <repository>
-            <id>github-utils</id>
-            <name>Aerotrack Utils</name>
-            <url>https://maven.pkg.github.com/trjohnny/AerotrackUtils</url>
+            <url>https://maven.pkg.github.com/trjohnny/Aerotrack</url>
         </repository>
     </repositories>
 
@@ -120,13 +115,13 @@
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-model</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
         </dependency>
         <!-- Aerotrack Utils -->
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-utils</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.2</version>
         </dependency>
     </dependencies>
 
