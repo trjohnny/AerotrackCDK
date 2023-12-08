@@ -39,7 +39,7 @@ public class RefreshRequestHandler implements RequestHandler<ScheduledEvent, Voi
 
         LambdaLogger logger = context.getLogger();
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().build();
-        S3Object s3Object = s3Client.getObject(System.getenv("DIRECTION_BUCKET"), "airports.json");
+        S3Object s3Object = s3Client.getObject(System.getenv("AIRPORT_BUCKET"), "airports.json");
 
         try(InputStream objectData = s3Object.getObjectContent()) {
             String jsonContent = IOUtils.toString(objectData, StandardCharsets.UTF_8);
