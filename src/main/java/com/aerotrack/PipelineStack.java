@@ -34,6 +34,7 @@ public class PipelineStack extends Stack {
         CodePipeline pipeline = CodePipeline.Builder.create(this, "AerotrackPipeline")
                 .pipelineName("AerotrackPipeline")
                 .codeBuildDefaults(buildOptions)
+                .publishAssetsInParallel(false)
                 .crossAccountKeys(true)
                 .synth(ShellStep.Builder.create("Synth")
                 .input(CodePipelineSource.gitHub("trjohnny/AerotrackInfrastructure", "mainline"))
