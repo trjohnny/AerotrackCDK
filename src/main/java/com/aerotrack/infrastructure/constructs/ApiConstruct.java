@@ -10,16 +10,11 @@ import software.amazon.awscdk.services.apigateway.LambdaIntegration;
 import software.amazon.awscdk.services.apigateway.MethodOptions;
 import software.amazon.awscdk.services.apigateway.Resource;
 import software.amazon.awscdk.services.apigateway.RestApi;
-import software.amazon.awscdk.services.apigateway.Stage;
 import software.amazon.awscdk.services.apigateway.ThrottleSettings;
-import software.amazon.awscdk.services.apigateway.ThrottlingPerMethod;
 import software.amazon.awscdk.services.apigateway.UsagePlan;
 import software.amazon.awscdk.services.apigateway.UsagePlanPerApiStage;
 import software.amazon.awscdk.services.dynamodb.Table;
-import software.amazon.awscdk.services.iam.Effect;
 import software.amazon.awscdk.services.iam.ManagedPolicy;
-import software.amazon.awscdk.services.iam.PolicyDocument;
-import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Code;
@@ -86,10 +81,10 @@ public class ApiConstruct extends Construct {
                 .environment(new HashMap<>() {
                     {
                         put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
-                        put(Constant.DIRECTION_BUCKET_ENV_VAR, directionBucket.getBucketName());
+                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, directionBucket.getBucketName());
                     }
                 })
-                .handler("com.aerotrack.lambda.query.QueryRequestHandler::handleRequest")
+                .handler("com.aerotrack.lambda.QueryRequestHandler::handleRequest")
                 .role(lambdaRole)
                 .memorySize(Constant.QUERY_LAMBDA_MEMORY_SIZE)
                 .timeout(Duration.seconds(Constant.QUERY_LAMBDA_TIMEOUT_SECONDS))

@@ -21,7 +21,7 @@ public class Constant {
     public static final String GITHUB_USERNAME = "trjohnny";
 
     public static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
-    public static final String DIRECTION_BUCKET_ENV_VAR = "DIRECTION_BUCKET";
+    public static final String AIRPORTS_BUCKET_ENV_VAR = "AIRPORTS_BUCKET";
     public static final Integer QUERY_LAMBDA_MEMORY_SIZE = 128;
     public static final Integer QUERY_LAMBDA_TIMEOUT_SECONDS = 20;
     public static final Integer REFRESH_EVENT_RATE_SECONDS = 60; // Multiple of 60
