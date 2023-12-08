@@ -26,6 +26,8 @@ jobs:
         run: |
           mkdir -p ~/.m2
           echo "<settings><servers><server><id>github</id><username>trjohnny</username><password>\${env.GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
+          cat ~/.m2/settings.xml
+          echo ${env.GITHUB_TOKEN}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
