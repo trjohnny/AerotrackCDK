@@ -3,20 +3,25 @@ package com.aerotrack.lambda;
 import com.aerotrack.model.Flight;
 import com.aerotrack.model.FlightPair;
 import com.aerotrack.model.ScanQueryRequest;
-import com.aerotrack.lambda.query.workflow.QueryLambdaWorkflow;
+import com.aerotrack.lambda.workflow.QueryLambdaWorkflow;
 import com.aerotrack.model.ScanQueryResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -24,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 class QueryLambdaTest {
@@ -32,25 +36,54 @@ class QueryLambdaTest {
     @Mock
     private DynamoDbEnhancedClient mockDynamoDbEnhancedClient;
     @Mock
+    private S3Client mockS3Client;
+    @Mock
     private DynamoDbTable<Flight> mockFlightTable;
     @Mock
     private PageIterable<Flight> mockPageIterable;
     @Mock
-    private Page<Flight> mockPage;
-    @Mock
     private SdkIterable<Flight> mockSdkIterable;
+    @Mock
+    private ResponseInputStream<GetObjectResponse> mockResponseInputStream;
     private QueryLambdaWorkflow queryLambdaWorkflow;
+    private final static String AIRPORT_JSON_STRING = """
+            {
+              "airports":
+                [
+                  {
+                    "airportCode" : "VIE",
+                    "name" : "Vienna",
+                    "countryCode" : "AT",
+                    "connections" : ["TSF",]
+                  },
+                  {
+                    "airportCode" : "TSF",
+                    "name" : "Venice (Treviso)",
+                    "countryCode" : "IT",
+                    "connections" : ["VIE"]
+                  }
+
+                ]
+            }
+            """;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
 
         when(mockFlightTable.query(any(QueryConditional.class))).thenReturn(mockPageIterable);
         when(mockPageIterable.items()).thenReturn(mockSdkIterable);
         when(mockDynamoDbEnhancedClient.table(any(), any()))
                 .thenAnswer((Answer<DynamoDbTable<Flight>>) invocation -> mockFlightTable);
+        when(mockS3Client.getObject((GetObjectRequest) any())).thenReturn(mockResponseInputStream);
 
-        queryLambdaWorkflow = new QueryLambdaWorkflow(mockDynamoDbEnhancedClient);
+        when(mockResponseInputStream.readAllBytes()).thenReturn(getUtf8Bytes(AIRPORT_JSON_STRING));
+
+        queryLambdaWorkflow = new QueryLambdaWorkflow(mockDynamoDbEnhancedClient, mockS3Client);
+    }
+
+    private static byte[] getUtf8Bytes(String input) {
+        return input.getBytes(StandardCharsets.UTF_8);
     }
 
     private List<Flight> getGenericFirstFlights() {
@@ -151,8 +184,8 @@ class QueryLambdaTest {
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(0)
                 .maxDays(0)
-                .availabilityStart("20210101")
-                .availabilityEnd("20210107")
+                .availabilityStart("2021-01-01")
+                .availabilityEnd("2021-01-07")
                 .returnToSameAirport(true)
                 .departureAirports(List.of("TSF"))
                 .destinationAirports(List.of("VIE"))

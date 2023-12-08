@@ -2,12 +2,29 @@
   "airports":
     [
       {
-        "from": "VCE",
-        "to": "DUB"
+        "airportCode" : "VCE",
+        "name" : "Venice Marco Polo",
+        "countryCode" : "IT",
+        "connections" : ["AHO","BRI","BER","CGN","DUB","HEL"]
       },
       {
-        "from": "DUB",
-        "to": "VCE"
+        "airportCode" : "VIE",
+        "name" : "Vienna",
+        "countryCode" : "AT",
+        "connections" : ["VCE","TSF","BRI"]
+      },
+      {
+        "airportCode" : "TSF",
+        "name" : "Venice (Treviso)",
+        "countryCode" : "IE",
+        "connections" : ["AHO","BRI","BER","CGN","DUB","HEL"]
+      },
+      {
+        "airportCode" : "DUB",
+        "name" : "Dublin",
+        "countryCode" : "IE",
+        "connections" : ["VCE","TSF","ATH","BCN","BOH","LON"]
       }
+
     ]
 }
