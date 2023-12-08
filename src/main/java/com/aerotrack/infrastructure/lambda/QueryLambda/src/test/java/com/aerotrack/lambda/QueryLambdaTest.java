@@ -54,7 +54,7 @@ class QueryLambdaTest {
                     "airportCode" : "VIE",
                     "name" : "Vienna",
                     "countryCode" : "AT",
-                    "connections" : ["TSF",]
+                    "connections" : ["TSF"]
                   },
                   {
                     "airportCode" : "TSF",
