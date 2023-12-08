@@ -48,7 +48,7 @@ public class RefreshConstruct extends Construct {
                 .environment(new HashMap<>() {
                     {
                         put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
-                        put(Constant.DIRECTION_BUCKET_ENV_VAR, directionBucket.getBucketName());
+                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, directionBucket.getBucketName());
                     }
                 })
                 .role(lambdaRole)
