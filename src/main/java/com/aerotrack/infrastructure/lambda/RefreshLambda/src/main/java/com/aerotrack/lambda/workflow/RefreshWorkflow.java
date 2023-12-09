@@ -3,22 +3,18 @@ package com.aerotrack.lambda.workflow;
 import com.aerotrack.model.entities.Flight;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.AirportsJsonFile;
-import com.aerotrack.model.exceptions.ApiRequestException;
 import com.aerotrack.utils.Constants;
 import com.aerotrack.utils.clients.ryanair.RyanairClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kotlin.Pair;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONException;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
-import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.utils.Pair;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -50,8 +46,9 @@ public class RefreshWorkflow  {
             try {
                 Pair<String, String> randomConnection = getRandomAirportPair(airportList);
                 LocalDate randomDate = LocalDate.now().plusDays(pickNumberWithWeightedProbability(0, 365));
-                List<Flight> flights = RyanairClient.create().getFlights(randomConnection.getFirst(), randomConnection.getSecond(), randomDate);
+                List<Flight> flights = RyanairClient.create().getFlights(randomConnection.left(), randomConnection.right(), randomDate);
                 writeFlightsToTable(flights);
+                log.info("Success: {}", i);
             }
             catch (RuntimeException e) {
                 log.error("An exception occurred for the single request: " + e);
@@ -123,7 +120,7 @@ public class RefreshWorkflow  {
             if (randomConnectionIndex < connectionSum + connections) {
                 int randomToIndex = randomConnectionIndex - connectionSum;
                 String toAirportCode = airport.getConnections().get(randomToIndex);
-                return new Pair<>(airport.getAirportCode(), toAirportCode);
+                return Pair.of(airport.getAirportCode(), toAirportCode);
             }
             connectionSum += connections;
         }
