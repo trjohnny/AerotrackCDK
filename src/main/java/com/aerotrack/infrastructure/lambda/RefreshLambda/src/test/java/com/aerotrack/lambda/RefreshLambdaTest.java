@@ -2,6 +2,7 @@ package com.aerotrack.lambda;
 
 import com.aerotrack.lambda.workflow.RefreshWorkflow;
 import com.aerotrack.model.entities.Airport;
+import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 class RefreshLambdaTest {
 
     @Mock
-    private S3Client mockS3Client;
+    private AerotrackS3Client mockS3Client;
     @Mock
     private ResponseInputStream<GetObjectResponse> mockResponseInputStream;
 
@@ -46,8 +47,7 @@ class RefreshLambdaTest {
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
 
-        when(mockS3Client.getObject((GetObjectRequest) any())).thenReturn(mockResponseInputStream);
-        when(mockResponseInputStream.readAllBytes()).thenReturn(getUtf8Bytes(AIRPORT_JSON_STRING));
+        when(mockS3Client.getStringObjectFromS3(any())).thenReturn(AIRPORT_JSON_STRING);
         workflow = new RefreshWorkflow(mockS3Client, null);
 
     }

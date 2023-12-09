@@ -11,6 +11,7 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kotlin.Pair;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -27,19 +28,20 @@ import java.util.Random;
 import static com.aerotrack.utils.Constants.AIRPORTS_OBJECT_NAME;
 
 
+@Slf4j
 public class RefreshWorkflow  {
 
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
-    private final S3Client s3Client;
+    private final AerotrackS3Client s3Client;
 
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
     private static final int MAX_REQUESTS_PER_LAMBDA = 60;
 
-    public RefreshWorkflow(S3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient) {
+    public RefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient) {
         this.s3Client = s3Client;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
     }
-    public void handleRequest(LambdaLogger logger) throws IOException, InterruptedException {
+    public void refreshFlights() throws IOException, InterruptedException {
 
         AirportsJsonFile airportList = getAvailableAirports();
 
@@ -52,7 +54,7 @@ public class RefreshWorkflow  {
                 writeFlightsToTable(flights);
             }
             catch (RuntimeException e) {
-                logger.log("An exception occurred for the single request: " + e);
+                log.error("An exception occurred for the single request: " + e);
             }
 
             Thread.sleep(1000);
@@ -61,7 +63,7 @@ public class RefreshWorkflow  {
 
     public AirportsJsonFile getAvailableAirports() throws IOException {
 
-        String airportsJson = new AerotrackS3Client(s3Client).getStringObjectFromS3(AIRPORTS_OBJECT_NAME);
+        String airportsJson = s3Client.getStringObjectFromS3(AIRPORTS_OBJECT_NAME);
         return new ObjectMapper().readValue(airportsJson, new TypeReference<>() {});
     }
 
