@@ -17,6 +17,7 @@ import software.amazon.awscdk.services.s3.assets.AssetOptions;
 import software.amazon.jsii.JsiiObjectRef;
 import software.constructs.Construct;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -52,13 +53,20 @@ public class RefreshConstruct extends Construct {
                     }
                 })
                 .role(lambdaRole)
+                .timeout(Duration.minutes(5))
+                .memorySize(256)
                 .handler("com.aerotrack.lambda.RefreshRequestHandler::handleRequest")
                 .build();
 
         if(!isPersonalDeployment())
+        {
+            List<LambdaFunction> lambdas = new ArrayList<>();
+            for(int i = 0; i < Constant.REFRESH_LAMBDAS_PER_EVENT; i++)
+                lambdas.add(new LambdaFunction(refreshLambdaFunction));
             Rule.Builder.create(this, Utils.getResourceName(Constant.REFRESH_EVENT_RULE))
-                .schedule(Schedule.rate(Duration.seconds(Constant.REFRESH_EVENT_RATE_SECONDS)))
-                .targets(List.of(new LambdaFunction(refreshLambdaFunction)))
-                .build();
+                    .schedule(Schedule.rate(Duration.seconds(Constant.REFRESH_EVENT_RATE_SECONDS)))
+                    .targets(lambdas)
+                    .build();
+        }
     }
 }

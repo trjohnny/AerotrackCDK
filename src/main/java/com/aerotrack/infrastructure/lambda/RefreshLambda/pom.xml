@@ -17,9 +17,10 @@
     <repositories>
         <repository>
             <id>github</id>
-            <name>GitHub Apache Maven Packages</name>
+            <name>Aerotrack Model</name>
             <url>https://maven.pkg.github.com/trjohnny/Aerotrack</url>
         </repository>
+
     </repositories>
 
     <dependencies>
@@ -75,7 +76,26 @@
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-model</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aerotrack</groupId>
+            <artifactId>aerotrack-utils</artifactId>
+            <version>1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.8.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>RELEASE</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
