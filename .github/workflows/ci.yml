@@ -20,12 +20,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
-      - name: Create Maven settings.xml
-        uses: s4u/maven-settings-action@v2.8.0
-        with:
-          servers: '[{"id": "github", "username": "trjohnny", "password": "${{env.GITHUB_TOKEN}}"}]'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Find and Build all Maven projects
         run: |
