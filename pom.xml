@@ -10,7 +10,7 @@
     <repositories>
         <repository>
             <id>github</id>
-            <name>Aerotrack Model</name>
+            <name>GitHub Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/trjohnny/Aerotrack</url>
         </repository>
     </repositories>

@@ -1,28 +1,29 @@
 package com.aerotrack.lambda;
 
 import com.aerotrack.lambda.workflow.RefreshWorkflow;
+import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent;
+import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
 
 
+@Slf4j
 public class RefreshRequestHandler implements RequestHandler<ScheduledEvent, Void> {
 
 
     public Void handleRequest(ScheduledEvent event, Context context) {
 
-        LambdaLogger logger = context.getLogger();
 
         try {
-            new RefreshWorkflow(S3Client.create(), DynamoDbEnhancedClient.create()).handleRequest(logger);
+            new RefreshWorkflow(AerotrackS3Client.create(), DynamoDbEnhancedClient.create()).refreshFlights();
         }
         catch (IOException | NullPointerException | InterruptedException exc) {
-            logger.log("An exception occurred: " + exc);
+            log.error("An exception occurred: " + exc);
         }
 
         return null;
