@@ -51,7 +51,7 @@ public class RefreshWorkflow  {
                 log.info("Success: {}", i);
             }
             catch (RuntimeException e) {
-                log.error("An exception occurred for the single request: " + e);
+                log.error("An exception occurred for the single request: {} - caused by {}", e.getMessage(), e.getCause().getMessage());
             }
 
             Thread.sleep(1000);
