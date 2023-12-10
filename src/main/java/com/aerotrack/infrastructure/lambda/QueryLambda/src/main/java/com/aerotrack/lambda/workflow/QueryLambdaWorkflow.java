@@ -1,19 +1,16 @@
 package com.aerotrack.lambda.workflow;
 
-import com.aerotrack.model.Flight;
-import com.aerotrack.model.FlightPair;
-import com.aerotrack.model.ScanQueryRequest;
-import com.aerotrack.model.ScanQueryResponse;
-import com.aerotrack.utils.S3Utils;
+import com.aerotrack.model.entities.Airport;
+import com.aerotrack.model.entities.Flight;
+import com.aerotrack.model.entities.FlightPair;
+import com.aerotrack.model.protocol.ScanQueryRequest;
+import com.aerotrack.model.protocol.ScanQueryResponse;
+import com.aerotrack.model.entities.AirportsJsonFile;
+import com.aerotrack.utils.clients.dynamodb.AerotrackDynamoDbClient;
+import com.aerotrack.utils.clients.s3.AerotrackS3Client;
+import com.aerotrack.utils.Constants;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -30,37 +27,25 @@ import java.util.Set;
 
 @Slf4j
 public class QueryLambdaWorkflow {
-    private static final String AIRPORTS_OBJECT_NAME = "airports.json";
-    private final DynamoDbTable<Flight> flightTable;
-    static final TableSchema<Flight> FLIGHT_TABLE_SCHEMA = TableSchema.fromClass(Flight.class);
-    static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
-    static final String AIRPORTS_BUCKET_ENV_VAR = "AIRPORTS_BUCKET";
-    private final S3Client s3Client;
+    private final AerotrackDynamoDbClient dynamoDbClient;
+    private final AerotrackS3Client s3Client;
+    private final ObjectMapper objectMapper;
 
 
-    public QueryLambdaWorkflow(DynamoDbEnhancedClient dynamoDbEnhancedClient, S3Client s3Client) {
-        this.flightTable = dynamoDbEnhancedClient.table(
-                System.getenv(FLIGHT_TABLE_ENV_VAR),
-                FLIGHT_TABLE_SCHEMA);
+    public QueryLambdaWorkflow(AerotrackDynamoDbClient dynamoDbClient, AerotrackS3Client s3Client) {
+        this.dynamoDbClient = dynamoDbClient;
         this.s3Client = s3Client;
+        this.objectMapper = new ObjectMapper();
     }
 
     public ScanQueryResponse queryAndProcessFlights(ScanQueryRequest request) {
-        JSONObject airportsJson;
+        AirportsJsonFile airportsJsonFile = getAirportsJsonFile();
 
-        try {
-            airportsJson = S3Utils.getJsonObjectFromS3(s3Client, System.getenv(AIRPORTS_BUCKET_ENV_VAR), AIRPORTS_OBJECT_NAME);
-        } catch (IOException ioException) {
-            // No need to handle or propagate the IOException, we are not able to handle it.
-            // The QueryRequestHandler will log the error
-            throw new RuntimeException(ioException);
-        }
-
-        JSONArray airportsArray = airportsJson.getJSONArray("airports");
+        List<Airport> airportList = airportsJsonFile.getAirports();
 
         // This map is used to check the existence of every airport in the request and their possible connections.
         // In this way we limit the number of calls to DynamoDB
-        Map<String, Set<String>> airportsConnections = getAirportConnectionsMap(airportsArray);
+        Map<String, Set<String>> airportsConnections = getAirportConnectionsMap(airportList);
 
         List<FlightPair> flightPairs = new ArrayList<>();
         Map<String, List<Flight>> allReturnFlights = new HashMap<>();
@@ -76,7 +61,7 @@ public class QueryLambdaWorkflow {
                     if (! airportsConnections.get(destination).contains(returnDeparture))
                         continue;
 
-                    returnFlightsForDestination.addAll(scanFlights(destination, returnDeparture,
+                    returnFlightsForDestination.addAll(dynamoDbClient.scanFlightsBetweenDates(destination, returnDeparture,
                             request.getAvailabilityStart(), request.getAvailabilityEnd()));
                 }
                 allReturnFlights.put(destination, returnFlightsForDestination);
@@ -92,13 +77,13 @@ public class QueryLambdaWorkflow {
                 if (! airportsConnections.get(departure).contains(destination))
                     continue;
 
-                List<Flight> outboundFlights = scanFlights(departure, destination,
+                List<Flight> outboundFlights = dynamoDbClient.scanFlightsBetweenDates(departure, destination,
                         request.getAvailabilityStart(), request.getAvailabilityEnd());
 
                 log.debug(outboundFlights.toString());
 
                 List<Flight> returnFlights = request.getReturnToSameAirport() ?
-                        scanFlights(destination, departure, request.getAvailabilityStart(), request.getAvailabilityEnd()) :
+                        dynamoDbClient.scanFlightsBetweenDates(destination, departure, request.getAvailabilityStart(), request.getAvailabilityEnd()) :
                         allReturnFlights.getOrDefault(destination, new ArrayList<>());
 
                 log.debug(returnFlights.toString());
@@ -127,34 +112,28 @@ public class QueryLambdaWorkflow {
                 .build();
     }
 
-    private Map<String, Set<String>> getAirportConnectionsMap(JSONArray airportsArray) {
+    private AirportsJsonFile getAirportsJsonFile() {
+
+        try {
+            log.debug(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME));
+            return objectMapper.readValue(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME), AirportsJsonFile.class);
+        } catch (IOException ioException) {
+            // No need to handle or propagate the IOException, we are not able to handle it.
+            // The QueryRequestHandler will log the error
+            throw new RuntimeException(ioException);
+        }
+    }
+
+    private Map<String, Set<String>> getAirportConnectionsMap(List<Airport> airportList) {
         Map<String, Set<String>> airportsConnections = new HashMap<>();
 
-        for (int i = 0; i < airportsArray.length(); i++) {
-            JSONObject airport = airportsArray.getJSONObject(i);
-            String airportCode = airport.getString("airportCode");
-            JSONArray connectionsArray = airport.getJSONArray("connections");
-            Set<String> connections = new HashSet<>();
-            for (int j = 0; j < connectionsArray.length(); j++) {
-                connections.add(connectionsArray.getString(j));
-            }
-            airportsConnections.put(airportCode, connections);
+        for (Airport airport : airportList) {
+            String airportCode = airport.getAirportCode();
+            Set<String> connectionsSet = new HashSet<>(airport.getConnections());
+            airportsConnections.put(airportCode, connectionsSet);
         }
 
         return airportsConnections;
-    }
-
-
-    private List<Flight> scanFlights(String departure, String destination, String availabilityStart, String availabilityEnd) {
-        String partitionKey = departure + "-" + destination;
-        Key startKey = Key.builder().partitionValue(partitionKey).sortValue(availabilityStart).build();
-        Key endKey = Key.builder().partitionValue(partitionKey).sortValue(availabilityEnd).build();
-
-        log.info("Querying DynamoDb on table: {}", flightTable.tableName());
-        return flightTable.query(QueryConditional.sortBetween(startKey, endKey))
-                .items()
-                .stream()
-                .toList();
     }
 
     private int calculateDuration(Flight outboundFlight, Flight returnFlight) {
