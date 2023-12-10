@@ -9,6 +9,7 @@ import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import retrofit2.HttpException;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
@@ -29,32 +30,40 @@ public class RefreshWorkflow  {
 
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final AerotrackS3Client s3Client;
+    private final RyanairClient ryanairClient;
+    private final DynamoDbTable<Flight> flightsTable;
 
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
-    private static final int MAX_REQUESTS_PER_LAMBDA = 60;
+    public static final int MAX_REQUESTS_PER_LAMBDA = 900;
 
-    public RefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient) {
+    public RefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairClient ryanairClient) {
         this.s3Client = s3Client;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
+        this.ryanairClient = ryanairClient;
+
+        this.flightsTable = dynamoDbEnhancedClient.table(System.getenv(Constants.FLIGHT_TABLE_ENV_VAR), TableSchema.fromBean(Flight.class));
     }
     public void refreshFlights() throws IOException, InterruptedException {
 
         AirportsJsonFile airportList = getAvailableAirports();
+        Pair<String, String> randomConnection;
+        LocalDate randomDate;
+        List<Flight> flights;
 
         for(int i = 0; i < MAX_REQUESTS_PER_LAMBDA; i++) {
 
             try {
-                Pair<String, String> randomConnection = getRandomAirportPair(airportList);
-                LocalDate randomDate = LocalDate.now().plusDays(pickNumberWithWeightedProbability(0, 365));
-                List<Flight> flights = RyanairClient.create().getFlights(randomConnection.left(), randomConnection.right(), randomDate);
+                randomConnection = getRandomAirportPair(airportList);
+                randomDate = LocalDate.now().plusDays(pickNumberWithWeightedProbability(0, 365));
+                flights = ryanairClient.getFlights(randomConnection.left(), randomConnection.right(), randomDate);
                 writeFlightsToTable(flights);
                 log.info("Success: {}", i);
+            } catch (HttpException httpException) {
+                log.error("HttpException caught: {}", httpException.message());
+                if (httpException.code() == 400) return;
+            } catch (RuntimeException e) {
+                log.error("A RuntimeException exception occurred for the single request: " + e);
             }
-            catch (RuntimeException e) {
-                log.error("An exception occurred for the single request: " + e);
-            }
-
-            Thread.sleep(1000);
         }
     }
 
@@ -67,8 +76,8 @@ public class RefreshWorkflow  {
     public void writeFlightsToTable(List<Flight> flights) {
         if(flights.isEmpty())
             return;
-        DynamoDbTable<Flight> customerMappedTable = dynamoDbEnhancedClient.table(System.getenv(Constants.FLIGHT_TABLE_ENV_VAR), TableSchema.fromBean(Flight.class));
-        WriteBatch.Builder<Flight> builder = WriteBatch.builder(Flight.class).mappedTableResource(customerMappedTable);
+
+        WriteBatch.Builder<Flight> builder = WriteBatch.builder(Flight.class).mappedTableResource(flightsTable);
 
         for (Flight flight : flights) {
             builder.addPutItem(flight);

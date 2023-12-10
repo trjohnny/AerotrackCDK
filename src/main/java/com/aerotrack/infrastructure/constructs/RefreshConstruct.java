@@ -7,6 +7,7 @@ import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.events.Schedule;
 import software.amazon.awscdk.services.events.targets.LambdaFunction;
+import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Code;
@@ -33,6 +34,9 @@ public class RefreshConstruct extends Construct {
 
         Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constant.REFRESH_LAMBDA_ROLE))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
+                .managedPolicies(List.of(
+                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+                ))
                 .build();
 
         directionBucket.grantRead(lambdaRole);
@@ -60,13 +64,13 @@ public class RefreshConstruct extends Construct {
 
         if(!isPersonalDeployment())
         {
-            List<LambdaFunction> lambdas = new ArrayList<>();
-            for(int i = 0; i < Constant.REFRESH_LAMBDAS_PER_EVENT; i++)
-                lambdas.add(new LambdaFunction(refreshLambdaFunction));
-            Rule.Builder.create(this, Utils.getResourceName(Constant.REFRESH_EVENT_RULE))
-                    .schedule(Schedule.rate(Duration.seconds(Constant.REFRESH_EVENT_RATE_SECONDS)))
-                    .targets(lambdas)
+            Rule rule = Rule.Builder.create(this, Utils.getResourceName(Constant.REFRESH_EVENT_RULE))
+                    .schedule(Schedule.rate(Duration.minutes(Constant.REFRESH_EVENT_RATE_MINUTES)))
                     .build();
+
+            for (int i = 0; i < Constant.REFRESH_LAMBDAS_PER_EVENT; i++) {
+                rule.addTarget(new LambdaFunction(refreshLambdaFunction));
+            }
         }
     }
 }

@@ -25,9 +25,7 @@ public class Constant {
     public static final Integer QUERY_LAMBDA_MEMORY_SIZE = 128;
     public static final Integer QUERY_LAMBDA_TIMEOUT_SECONDS = 20;
     public static final Integer REFRESH_LAMBDAS_PER_EVENT = 5;
-
-    // Without 5 it does on average one request per second. With 5 it's around one request every 5 seconds.
-    public static final Integer REFRESH_EVENT_RATE_SECONDS = (60 * REFRESH_LAMBDAS_PER_EVENT);
+    public static final Integer REFRESH_EVENT_RATE_MINUTES = 15;
 
 
 }
