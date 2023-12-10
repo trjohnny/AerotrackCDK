@@ -23,7 +23,7 @@ import static com.aerotrack.utils.Constant.FLIGHTS_TABLE;
 
 @Getter
 public class DataConstruct extends Construct {
-    private final Bucket directionBucket;
+    private final Bucket airportsBucket;
     private final Table flightsTable;
     public DataConstruct(@NotNull Construct scope, @NotNull String id) {
         super(scope, id);
@@ -41,7 +41,7 @@ public class DataConstruct extends Construct {
                 .deletionProtection(false)
                 .build();
 
-        this.directionBucket = Bucket.Builder.create(this, Utils.getResourceName(AEROTRACK_BUCKET))
+        this.airportsBucket = Bucket.Builder.create(this, Utils.getResourceName(AEROTRACK_BUCKET))
                 .objectOwnership(ObjectOwnership.BUCKET_OWNER_ENFORCED)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
                 .encryption(BucketEncryption.S3_MANAGED)
@@ -50,7 +50,7 @@ public class DataConstruct extends Construct {
 
         BucketDeployment.Builder.create(this, Utils.getResourceName(AIRPORTS_DEPLOYMENT))
                 .sources(List.of(Source.asset("src/main/java/com/aerotrack/infrastructure/s3data/")))
-                .destinationBucket(this.directionBucket)
+                .destinationBucket(this.airportsBucket)
                 .build();
     }
 

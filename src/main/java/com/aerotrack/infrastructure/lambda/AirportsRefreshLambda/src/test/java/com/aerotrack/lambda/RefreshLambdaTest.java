@@ -1,17 +1,12 @@
 package com.aerotrack.lambda;
 
-import com.aerotrack.lambda.workflow.RefreshWorkflow;
+import com.aerotrack.lambda.workflow.AirportsRefreshWorkflow;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.utils.clients.ryanair.RyanairClient;
-import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +20,7 @@ import static org.mockito.Mockito.when;
 class RefreshLambdaTest {
 
 
-    private RefreshWorkflow workflow;
+    private AirportsRefreshWorkflow workflow;
     @Mock
     private RyanairClient ryanairClient;
 
@@ -33,7 +28,7 @@ class RefreshLambdaTest {
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
         when(ryanairClient.getAirportConnections(any())).thenReturn(List.of("VLC", "NAP"));
-        workflow = new RefreshWorkflow(null, ryanairClient);
+        workflow = new AirportsRefreshWorkflow(null, ryanairClient);
     }
 
 

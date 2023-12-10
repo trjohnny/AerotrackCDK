@@ -36,7 +36,7 @@ public class ApiConstruct extends Construct {
 
     private static final String SCAN_RESOURCE = "scan";
 
-    public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
+    public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket airportsBucket, Table flightsTable) {
         super(scope, id);
 
         Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constant.QUERY_LAMBDA_ROLE))
@@ -46,7 +46,7 @@ public class ApiConstruct extends Construct {
                 ))
                 .build();
 
-        directionBucket.grantRead(lambdaRole);
+        airportsBucket.grantRead(lambdaRole);
         flightsTable.grantReadData(lambdaRole);
 
         RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(Constant.REST_API_GATEWAY))
@@ -81,7 +81,7 @@ public class ApiConstruct extends Construct {
                 .environment(new HashMap<>() {
                     {
                         put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
-                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, directionBucket.getBucketName());
+                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
                 })
                 .handler("com.aerotrack.lambda.QueryRequestHandler::handleRequest")

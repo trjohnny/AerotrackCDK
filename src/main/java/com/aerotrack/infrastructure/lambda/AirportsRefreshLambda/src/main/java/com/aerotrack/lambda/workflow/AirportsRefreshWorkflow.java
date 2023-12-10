@@ -24,7 +24,7 @@ import static com.aerotrack.utils.Constants.AIRPORTS_OBJECT_NAME;
 
 @Slf4j
 @AllArgsConstructor
-public class RefreshWorkflow  {
+public class AirportsRefreshWorkflow  {
 
     private enum AirportCode {
         LHR, CDG, FRA, AMS, MAD, BCN, FCO, MUC, LGW, IST,
@@ -37,8 +37,8 @@ public class RefreshWorkflow  {
     private final AerotrackS3Client s3Client;
     private final RyanairClient ryanairClient;
 
-    public static RefreshWorkflow create() {
-        return new RefreshWorkflow(AerotrackS3Client.create(), RyanairClient.create());
+    public static AirportsRefreshWorkflow create() {
+        return new AirportsRefreshWorkflow(AerotrackS3Client.create(), RyanairClient.create());
     }
     public void refreshFlights() throws IOException {
 
