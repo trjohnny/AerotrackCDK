@@ -1,29 +1,22 @@
 package com.aerotrack.lambda;
 
-import com.aerotrack.model.Flight;
-import com.aerotrack.model.FlightPair;
-import com.aerotrack.model.ScanQueryRequest;
+import com.aerotrack.model.entities.Flight;
+import com.aerotrack.model.entities.FlightPair;
+import com.aerotrack.model.protocol.ScanQueryRequest;
 import com.aerotrack.lambda.workflow.QueryLambdaWorkflow;
-import com.aerotrack.model.ScanQueryResponse;
+import com.aerotrack.model.protocol.ScanQueryResponse;
+import com.aerotrack.utils.clients.dynamodb.AerotrackDynamoDbClient;
+import com.aerotrack.utils.clients.s3.AerotrackS3Client;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.stubbing.Answer;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.core.pagination.sync.SdkIterable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -34,17 +27,9 @@ import static org.mockito.Mockito.when;
 class QueryLambdaTest {
 
     @Mock
-    private DynamoDbEnhancedClient mockDynamoDbEnhancedClient;
+    private AerotrackDynamoDbClient mockDynamoDbClient;
     @Mock
-    private S3Client mockS3Client;
-    @Mock
-    private DynamoDbTable<Flight> mockFlightTable;
-    @Mock
-    private PageIterable<Flight> mockPageIterable;
-    @Mock
-    private SdkIterable<Flight> mockSdkIterable;
-    @Mock
-    private ResponseInputStream<GetObjectResponse> mockResponseInputStream;
+    private AerotrackS3Client mockS3Client;
     private QueryLambdaWorkflow queryLambdaWorkflow;
     private final static String AIRPORT_JSON_STRING = """
             {
@@ -70,16 +55,8 @@ class QueryLambdaTest {
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-
-        when(mockFlightTable.query(any(QueryConditional.class))).thenReturn(mockPageIterable);
-        when(mockPageIterable.items()).thenReturn(mockSdkIterable);
-        when(mockDynamoDbEnhancedClient.table(any(), any()))
-                .thenAnswer((Answer<DynamoDbTable<Flight>>) invocation -> mockFlightTable);
-        when(mockS3Client.getObject((GetObjectRequest) any())).thenReturn(mockResponseInputStream);
-
-        when(mockResponseInputStream.readAllBytes()).thenReturn(getUtf8Bytes(AIRPORT_JSON_STRING));
-
-        queryLambdaWorkflow = new QueryLambdaWorkflow(mockDynamoDbEnhancedClient, mockS3Client);
+        when(mockS3Client.getStringObjectFromS3(any())).thenReturn(AIRPORT_JSON_STRING);
+        queryLambdaWorkflow = new QueryLambdaWorkflow(mockDynamoDbClient, mockS3Client);
     }
 
     private static byte[] getUtf8Bytes(String input) {
@@ -102,9 +79,9 @@ class QueryLambdaTest {
 
     @Test
     void queryAndProcessFlights_SuccessfulQuery_CorrectProcessing() {
-        when(mockSdkIterable.stream())
-                .thenAnswer(inv -> getGenericFirstFlights().stream())
-                .thenAnswer(inv -> getGenericSecondFlights().stream());
+        when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any()))
+                .thenReturn(getGenericFirstFlights())
+                .thenReturn(getGenericSecondFlights());
 
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(2)
@@ -126,7 +103,7 @@ class QueryLambdaTest {
     @Test
     void queryAndProcessFlights_NoMatchingFlights_ReturnsEmptyList() {
 
-        when(mockSdkIterable.stream()).thenAnswer(inv -> Stream.of());
+        when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any())).thenReturn(Collections.emptyList());
 
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(2)
@@ -146,9 +123,9 @@ class QueryLambdaTest {
 
     @Test
     void queryAndProcessFlights_HighPriceVariations_CorrectSorting() {
-        when(mockSdkIterable.stream())
-                .thenAnswer(inv -> getGenericFirstFlights().stream())
-                .thenAnswer(inv -> getGenericSecondFlights().stream());
+        when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any()))
+                .thenReturn(getGenericFirstFlights())
+                .thenReturn(getGenericSecondFlights());
 
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(2)
@@ -177,9 +154,9 @@ class QueryLambdaTest {
 
     @Test
     void queryAndProcessFlights_OneDayTrip() {
-        when(mockSdkIterable.stream())
-                .thenAnswer(inv -> getGenericFirstFlights().stream())
-                .thenAnswer(inv -> getGenericSecondFlights().stream());
+        when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any()))
+                .thenReturn(getGenericFirstFlights())
+                .thenReturn(getGenericSecondFlights());
 
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(0)

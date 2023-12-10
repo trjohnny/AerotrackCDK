@@ -1,8 +1,10 @@
 package com.aerotrack.lambda;
 
 import com.aerotrack.lambda.workflow.QueryLambdaWorkflow;
-import com.aerotrack.model.ScanQueryRequest;
-import com.aerotrack.model.ScanQueryResponse;
+import com.aerotrack.model.protocol.ScanQueryRequest;
+import com.aerotrack.model.protocol.ScanQueryResponse;
+import com.aerotrack.utils.clients.dynamodb.AerotrackDynamoDbClient;
+import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -10,17 +12,15 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.Map;
 
 @Slf4j
 public class QueryRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    private final DynamoDbEnhancedClient dynamoDbEnhancedClient = DynamoDbEnhancedClient.create();
-    private final S3Client s3Client = S3Client.create();
+    private final AerotrackS3Client s3Client = AerotrackS3Client.create();
+    private final AerotrackDynamoDbClient dynamoDbClient = AerotrackDynamoDbClient.create();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final QueryLambdaWorkflow queryLambdaWorkflow = new QueryLambdaWorkflow(dynamoDbEnhancedClient, s3Client);
+    private final QueryLambdaWorkflow queryLambdaWorkflow = new QueryLambdaWorkflow(dynamoDbClient, s3Client);
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
