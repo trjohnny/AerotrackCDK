@@ -33,7 +33,7 @@ import static com.aerotrack.utils.Utils.isPersonalDeployment;
 public class RefreshConstruct extends Construct {
 
 
-    public RefreshConstruct(@NotNull Construct scope, @NotNull String id, Bucket directionBucket, Table flightsTable) {
+    public RefreshConstruct(@NotNull Construct scope, @NotNull String id, Bucket airportsBucket, Table flightsTable) {
         super(scope, id);
 
 
@@ -42,22 +42,22 @@ public class RefreshConstruct extends Construct {
                 new HashMap<>() {
                     {
                         put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
-                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, directionBucket.getBucketName());
+                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
                 });
 
-        directionBucket.grantRead(Objects.requireNonNull(flightsRefreshLambda.getRole()));
+        airportsBucket.grantRead(Objects.requireNonNull(flightsRefreshLambda.getRole()));
         flightsTable.grantWriteData(Objects.requireNonNull(flightsRefreshLambda.getRole()));
 
         Function airportsRefreshLambda = createRefreshLambda(Constant.AIRPORTS_REFRESH_LAMBDA,
                 Constant.AIRPORTS_REFRESH_LAMBDA_ROLE,
                 new HashMap<>() {
                     {
-                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, directionBucket.getBucketName());
+                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
                 });
 
-        directionBucket.grantReadWrite(Objects.requireNonNull(airportsRefreshLambda.getRole()));
+        airportsBucket.grantReadWrite(Objects.requireNonNull(airportsRefreshLambda.getRole()));
 
         if(!isPersonalDeployment())
         {
