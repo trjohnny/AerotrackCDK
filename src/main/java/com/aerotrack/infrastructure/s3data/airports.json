@@ -5,25 +5,29 @@
         "airportCode" : "VCE",
         "name" : "Venice Marco Polo",
         "countryCode" : "IT",
-        "connections" : ["AHO","BRI","BER","CGN","DUB","HEL"]
+        "connections" : ["AHO","BRI","BER","CGN","DUB","HEL"],
+        "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       },
       {
         "airportCode" : "VIE",
         "name" : "Vienna",
         "countryCode" : "AT",
-        "connections" : ["VCE","TSF","BRI"]
+        "connections" : ["VCE","TSF","BRI"],
+        "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       },
       {
         "airportCode" : "TSF",
         "name" : "Venice (Treviso)",
         "countryCode" : "IE",
-        "connections" : ["AHO","VIE","BER","CGN","DUB","HEL"]
+        "connections" : ["AHO","VIE","BER","CGN","DUB","HEL"],
+        "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       },
       {
         "airportCode" : "DUB",
         "name" : "Dublin",
         "countryCode" : "IE",
-        "connections" : ["VCE","TSF","ATH","BCN","BOH","LON"]
+        "connections" : ["VCE","TSF","ATH","BCN","BOH","LON"],
+        "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       }
 
     ]
