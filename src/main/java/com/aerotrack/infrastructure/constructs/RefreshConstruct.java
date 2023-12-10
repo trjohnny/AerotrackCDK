@@ -7,7 +7,6 @@ import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.events.Schedule;
 import software.amazon.awscdk.services.events.targets.LambdaFunction;
-import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Code;
@@ -34,9 +33,6 @@ public class RefreshConstruct extends Construct {
 
         Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constant.REFRESH_LAMBDA_ROLE))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
-                .managedPolicies(List.of(
-                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
-                ))
                 .build();
 
         directionBucket.grantRead(lambdaRole);
