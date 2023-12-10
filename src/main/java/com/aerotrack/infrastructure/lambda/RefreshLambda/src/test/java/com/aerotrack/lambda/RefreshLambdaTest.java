@@ -2,22 +2,27 @@ package com.aerotrack.lambda;
 
 import com.aerotrack.lambda.workflow.RefreshWorkflow;
 import com.aerotrack.model.entities.Airport;
+import com.aerotrack.model.entities.Flight;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import com.aerotrack.utils.clients.ryanair.RyanairClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class RefreshLambdaTest {
@@ -25,9 +30,13 @@ class RefreshLambdaTest {
     @Mock
     private AerotrackS3Client mockS3Client;
     @Mock
-    private ResponseInputStream<GetObjectResponse> mockResponseInputStream;
+    private RyanairClient mockRyanairClient;
+    @Mock
+    private DynamoDbEnhancedClient mockDynamoDbClient;
+    @Mock
+    private DynamoDbTable<Flight> mockFlightsTable;
 
-    private RefreshWorkflow workflow;
+    private RefreshWorkflow refreshWorkflow;
 
     private final static String AIRPORT_JSON_STRING = """
             {
@@ -48,7 +57,7 @@ class RefreshLambdaTest {
         MockitoAnnotations.openMocks(this);
 
         when(mockS3Client.getStringObjectFromS3(any())).thenReturn(AIRPORT_JSON_STRING);
-        workflow = new RefreshWorkflow(mockS3Client, null);
+        refreshWorkflow = new RefreshWorkflow(mockS3Client, mockDynamoDbClient, mockRyanairClient);
 
     }
 
@@ -60,7 +69,7 @@ class RefreshLambdaTest {
     void getAvailableAirports_SuccessfulRequest_CorrectMapping() {
 
         assertDoesNotThrow(() -> {
-            List<Airport> airports = workflow.getAvailableAirports().getAirports();
+            List<Airport> airports = refreshWorkflow.getAvailableAirports().getAirports();
             assertNotNull(airports);
             assertFalse(airports.isEmpty());
             assertEquals("VIE", airports.get(0).getAirportCode());
@@ -70,9 +79,20 @@ class RefreshLambdaTest {
     }
 
     @Test
+    void testRefreshFlights() throws IOException, InterruptedException {
+        when(mockS3Client.getStringObjectFromS3(anyString())).thenReturn(AIRPORT_JSON_STRING);
+        when(mockRyanairClient.getFlights(anyString(), anyString(), any(LocalDate.class))).thenReturn(List.of(new Flight()));
+        when(mockDynamoDbClient.table(anyString(), any(TableSchema.class))).thenReturn(mockFlightsTable);
+
+        refreshWorkflow.refreshFlights();
+
+        verify(mockRyanairClient, times(RefreshWorkflow.MAX_REQUESTS_PER_LAMBDA)).getFlights(anyString(), anyString(), any(LocalDate.class));
+    }
+
+    @Test
     void pickRandomDay_SuccessfulPick_InRange() {
-        assert(workflow.pickNumberWithWeightedProbability(0, 365) <= 365);
-        assert(workflow.pickNumberWithWeightedProbability(0, 0) == 0);
+        assert(refreshWorkflow.pickNumberWithWeightedProbability(0, 365) <= 365);
+        assert(refreshWorkflow.pickNumberWithWeightedProbability(0, 0) == 0);
 
         int lessThan180 = 0;
         int moreThan180 = 0;
@@ -80,7 +100,7 @@ class RefreshLambdaTest {
         // testing that the first 180 items are more probable to occur than the next 185
         // probability of this happening should be so high that the test basically never fails
         for(int i = 0; i < 100; i++) {
-            if(workflow.pickNumberWithWeightedProbability(0, 365) < 180)
+            if(refreshWorkflow.pickNumberWithWeightedProbability(0, 365) < 180)
                 lessThan180++;
             else
                 moreThan180++;

@@ -49,13 +49,13 @@ public class PipelineStack extends Stack {
                         .build())
                 .build()));
 
-        alphaStage.addPost(new ManualApprovalStep("approval"));
-
-        pipeline.addStage(new AppStage(this, "Prod", StageProps.builder()
+        StageDeployment prodStage = pipeline.addStage(new AppStage(this, "Prod", StageProps.builder()
                 .env(Environment.builder()
                         .account("715311622639")
                         .region("eu-west-1")
                         .build())
                 .build()));
+
+        alphaStage.addPre(new ManualApprovalStep("approval"));
     }
 }
