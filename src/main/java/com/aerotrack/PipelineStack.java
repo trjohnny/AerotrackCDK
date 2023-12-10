@@ -56,6 +56,6 @@ public class PipelineStack extends Stack {
                         .build())
                 .build()));
 
-        alphaStage.addPre(new ManualApprovalStep("approval"));
+        prodStage.addPre(new ManualApprovalStep("approval"));
     }
 }
