@@ -86,7 +86,7 @@ public class ApiConstruct extends Construct {
                 })
                 .handler("com.aerotrack.lambda.QueryRequestHandler::handleRequest")
                 .role(lambdaRole)
-                .memorySize(Constant.QUERY_LAMBDA_MEMORY_SIZE)
+                .memorySize(Constant.QUERY_LAMBDA_MEMORY_SIZE_MB)
                 .timeout(Duration.seconds(Constant.QUERY_LAMBDA_TIMEOUT_SECONDS))
                 .logRetention(RetentionDays.ONE_DAY)
                 .build());
