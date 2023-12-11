@@ -38,9 +38,8 @@ public class QueryLambdaWorkflow {
         this.objectMapper = new ObjectMapper();
     }
 
-    public ScanQueryResponse queryAndProcessFlights(ScanQueryRequest request) {
-        AirportsJsonFile airportsJsonFile = getAirportsJsonFile();
-
+    public ScanQueryResponse queryAndProcessFlights(ScanQueryRequest request) throws IOException {
+        AirportsJsonFile airportsJsonFile = objectMapper.readValue(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME), AirportsJsonFile.class);
         List<Airport> airportList = airportsJsonFile.getAirports();
 
         // This map is used to check the existence of every airport in the request and their possible connections.
@@ -68,6 +67,7 @@ public class QueryLambdaWorkflow {
             }
         }
 
+        log.info("Processing outbound and return flights...");
         // Process outbound and return flights
         for (String departure : request.getDepartureAirports()) {
             if (! airportsConnections.containsKey(departure))
@@ -102,6 +102,7 @@ public class QueryLambdaWorkflow {
             }
         }
 
+        log.info("Sorting pairs...");
         List<FlightPair> sortedPairs = flightPairs.stream()
                 .sorted(Comparator.comparing(FlightPair::getTotalPrice))
                 .limit(10)
@@ -110,18 +111,6 @@ public class QueryLambdaWorkflow {
         return ScanQueryResponse.builder()
                 .flightPairs(sortedPairs)
                 .build();
-    }
-
-    private AirportsJsonFile getAirportsJsonFile() {
-
-        try {
-            log.debug(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME));
-            return objectMapper.readValue(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME), AirportsJsonFile.class);
-        } catch (IOException ioException) {
-            // No need to handle or propagate the IOException, we are not able to handle it.
-            // The QueryRequestHandler will log the error
-            throw new RuntimeException(ioException);
-        }
     }
 
     private Map<String, Set<String>> getAirportConnectionsMap(List<Airport> airportList) {
