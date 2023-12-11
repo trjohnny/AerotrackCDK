@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-public class AerotrackIntegrationTest {
+public class AerotrackIT {
 
     private AerotrackApiClient aerotrackApiClient;
     private final LocalDate today = LocalDate.now();
