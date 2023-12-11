@@ -33,12 +33,12 @@ class QueryLambdaTest {
     @Mock
     private AerotrackS3Client mockS3Client;
     private QueryLambdaWorkflow queryLambdaWorkflow;
-    private LocalDate today = LocalDate.now();
-    private LocalDate tenDaysLater = today.plusDays(10);
+    private final LocalDate today = LocalDate.now();
+    private final LocalDate tenDaysLater = today.plusDays(10);
 
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private String startDateString = today.format(formatter);
-    private String endDateString = tenDaysLater.format(formatter);
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final String startDateString = today.format(formatter);
+    private final String endDateString = tenDaysLater.format(formatter);
     private final static String AIRPORT_JSON_STRING = """
             {
               "airports":

@@ -25,7 +25,7 @@ public class Constant {
 
     public static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
     public static final String AIRPORTS_BUCKET_ENV_VAR = "AIRPORTS_BUCKET";
-    public static final Integer QUERY_LAMBDA_MEMORY_SIZE_MB = 256;
+    public static final Integer QUERY_LAMBDA_MEMORY_SIZE_MB = 2048;
     public static final Integer QUERY_LAMBDA_TIMEOUT_SECONDS = 30;
     public static final Integer FLIGHTS_REFRESH_LAMBDAS_PER_EVENT = 5;
 

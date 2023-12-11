@@ -44,6 +44,23 @@
                     <mainClass>com.aerotrack.AerotrackCloudApp</mainClass>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Optional: configuration for the failsafe plugin -->
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -109,6 +126,18 @@
             <artifactId>lombok</artifactId>
             <version>1.18.30</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aerotrack</groupId>
+            <artifactId>aerotrack-model</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aerotrack</groupId>
+            <artifactId>aerotrack-utils</artifactId>
+            <version>1.1.6</version>
         </dependency>
     </dependencies>
 </project>

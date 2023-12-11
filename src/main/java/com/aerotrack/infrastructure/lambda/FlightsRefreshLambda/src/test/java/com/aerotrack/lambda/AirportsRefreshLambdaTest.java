@@ -1,6 +1,6 @@
 package com.aerotrack.lambda;
 
-import com.aerotrack.lambda.workflow.RefreshWorkflow;
+import com.aerotrack.lambda.workflow.FlightRefreshWorkflow;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.Flight;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class RefreshLambdaTest {
+class AirportsRefreshLambdaTest {
 
     @Mock
     private AerotrackS3Client mockS3Client;
@@ -36,7 +36,7 @@ class RefreshLambdaTest {
     @Mock
     private DynamoDbTable<Flight> mockFlightsTable;
 
-    private RefreshWorkflow refreshWorkflow;
+    private FlightRefreshWorkflow flightRefreshWorkflow;
 
     private final static String AIRPORT_JSON_STRING = """
             {
@@ -57,7 +57,7 @@ class RefreshLambdaTest {
         MockitoAnnotations.openMocks(this);
 
         when(mockS3Client.getStringObjectFromS3(any())).thenReturn(AIRPORT_JSON_STRING);
-        refreshWorkflow = new RefreshWorkflow(mockS3Client, mockDynamoDbClient, mockRyanairClient);
+        flightRefreshWorkflow = new FlightRefreshWorkflow(mockS3Client, mockDynamoDbClient, mockRyanairClient);
 
     }
 
@@ -69,7 +69,7 @@ class RefreshLambdaTest {
     void getAvailableAirports_SuccessfulRequest_CorrectMapping() {
 
         assertDoesNotThrow(() -> {
-            List<Airport> airports = refreshWorkflow.getAvailableAirports().getAirports();
+            List<Airport> airports = flightRefreshWorkflow.getAvailableAirports().getAirports();
             assertNotNull(airports);
             assertFalse(airports.isEmpty());
             assertEquals("VIE", airports.get(0).getAirportCode());
@@ -84,15 +84,15 @@ class RefreshLambdaTest {
         when(mockRyanairClient.getFlights(anyString(), anyString(), any(LocalDate.class))).thenReturn(List.of(new Flight()));
         when(mockDynamoDbClient.table(anyString(), any(TableSchema.class))).thenReturn(mockFlightsTable);
 
-        refreshWorkflow.refreshFlights();
+        flightRefreshWorkflow.refreshFlights();
 
-        verify(mockRyanairClient, times(RefreshWorkflow.MAX_REQUESTS_PER_LAMBDA)).getFlights(anyString(), anyString(), any(LocalDate.class));
+        verify(mockRyanairClient, times(FlightRefreshWorkflow.MAX_REQUESTS_PER_LAMBDA)).getFlights(anyString(), anyString(), any(LocalDate.class));
     }
 
     @Test
     void pickRandomDay_SuccessfulPick_InRange() {
-        assert(refreshWorkflow.pickNumberWithWeightedProbability(0, 365) <= 365);
-        assert(refreshWorkflow.pickNumberWithWeightedProbability(0, 0) == 0);
+        assert(flightRefreshWorkflow.pickNumberWithWeightedProbability(0, 365) <= 365);
+        assert(flightRefreshWorkflow.pickNumberWithWeightedProbability(0, 0) == 0);
 
         int lessThan180 = 0;
         int moreThan180 = 0;
@@ -100,7 +100,7 @@ class RefreshLambdaTest {
         // testing that the first 180 items are more probable to occur than the next 185
         // probability of this happening should be so high that the test basically never fails
         for(int i = 0; i < 100; i++) {
-            if(refreshWorkflow.pickNumberWithWeightedProbability(0, 365) < 180)
+            if(flightRefreshWorkflow.pickNumberWithWeightedProbability(0, 365) < 180)
                 lessThan180++;
             else
                 moreThan180++;

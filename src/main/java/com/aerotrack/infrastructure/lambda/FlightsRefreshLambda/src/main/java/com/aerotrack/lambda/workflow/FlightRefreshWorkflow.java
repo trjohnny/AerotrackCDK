@@ -26,7 +26,7 @@ import static com.aerotrack.utils.Constants.AIRPORTS_OBJECT_NAME;
 
 
 @Slf4j
-public class RefreshWorkflow  {
+public class FlightRefreshWorkflow {
 
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final AerotrackS3Client s3Client;
@@ -36,7 +36,7 @@ public class RefreshWorkflow  {
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
     public static final int MAX_REQUESTS_PER_LAMBDA = 900;
 
-    public RefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairClient ryanairClient) {
+    public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairClient ryanairClient) {
         this.s3Client = s3Client;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
         this.ryanairClient = ryanairClient;
