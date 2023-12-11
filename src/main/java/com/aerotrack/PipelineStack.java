@@ -54,7 +54,7 @@ public class PipelineStack extends Stack {
                                                 "</server>" +
                                             "</servers>" +
                                         "</settings>' > ~/.m2/settings.xml",
-                                "echo ~/.m2/settings.xml",
+                                "cat ~/.m2/settings.xml",
                                 "npm install -g aws-cdk",
                                 "cdk synth"
                         ))
