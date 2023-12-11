@@ -12,12 +12,29 @@ import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static com.aerotrack.utils.Constant.GITHUB_USERNAME;
 
 
 public class PipelineStack extends Stack {
+
+    private String createMavenSettings() {
+        return "mkdir -p ~/.m2 &&" +
+                "echo '<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" " +
+                        "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+                        "xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 " +
+                        "http://maven.apache.org/xsd/settings-1.0.0.xsd\">" +
+                            "<servers>" +
+                                "<server>" +
+                                    "<id>github</id>" +
+                                    String.format("<username>%s</username>", GITHUB_USERNAME) +
+                                    "<password>${GITHUB_TOKEN}</password>" +
+                                "</server>" +
+                            "</servers>" +
+                        "</settings>' > ~/.m2/settings.xml";
+    }
 
     public PipelineStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
@@ -41,20 +58,7 @@ public class PipelineStack extends Stack {
                 .synth(ShellStep.Builder.create("Synth")
                         .input(CodePipelineSource.gitHub("trjohnny/AerotrackInfrastructure", "mainline"))
                         .commands(Arrays.asList(
-                                "echo Creating Maven settings.xml...",
-                                "mkdir -p ~/.m2",
-                                "echo '<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" " +
-                                        "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                                        "xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 " +
-                                        "http://maven.apache.org/xsd/settings-1.0.0.xsd\">" +
-                                        "<servers>" +
-                                        "<server>" +
-                                        "<id>github</id>" +
-                                        String.format("<username>%s</username>", GITHUB_USERNAME) +
-                                        "<password>${GITHUB_TOKEN}</password>" +
-                                        "</server>" +
-                                        "</servers>" +
-                                        "</settings>' > ~/.m2/settings.xml",
+                                createMavenSettings(),
                                 "npm install -g aws-cdk",
                                 "cdk synth"
                         ))
@@ -74,7 +78,7 @@ public class PipelineStack extends Stack {
         // Integration testing step
         ShellStep integrationTestStep = ShellStep.Builder.create("IntegrationTests")
                 .commands(Arrays.asList(
-                        "echo Running integration tests",
+                        createMavenSettings(),
                         "mvn verify"
                 ))
                 .build();
