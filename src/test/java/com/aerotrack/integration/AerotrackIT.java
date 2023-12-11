@@ -31,7 +31,7 @@ public class AerotrackIT {
         // Create a ScanQueryRequest with the required parameters for your test
         ScanQueryRequest scanQueryRequest = ScanQueryRequest.builder()
                 .minDays(2)
-                .maxDays(6)
+                .maxDays(6) // < 10
                 .availabilityStart(startDateString)
                 .availabilityEnd(endDateString)
                 .returnToSameAirport(true)

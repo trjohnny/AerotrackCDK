@@ -1,14 +1,11 @@
 package com.aerotrack;
 
 import com.aerotrack.infrastructure.AppStage;
-import com.aerotrack.utils.Utils;
 import software.amazon.awscdk.Environment;
 import software.amazon.awscdk.pipelines.*;
 import software.amazon.awscdk.StageProps;
 import software.amazon.awscdk.services.codebuild.BuildEnvironment;
 import software.amazon.awscdk.services.codebuild.BuildEnvironmentVariable;
-import software.amazon.awscdk.services.codebuild.BuildSpec;
-import software.amazon.awscdk.services.s3.assets.AssetOptions;
 import software.amazon.awscdk.services.secretsmanager.Secret;
 import software.constructs.Construct;
 import software.amazon.awscdk.Stack;
@@ -53,7 +50,7 @@ public class PipelineStack extends Stack {
                                         "<servers>" +
                                         "<server>" +
                                         "<id>github</id>" +
-                                        "<username>trjohnny</username>" +
+                                        String.format("<username>%s</username>", GITHUB_USERNAME) +
                                         "<password>${GITHUB_TOKEN}</password>" +
                                         "</server>" +
                                         "</servers>" +
@@ -73,6 +70,17 @@ public class PipelineStack extends Stack {
                         .region("eu-west-1")
                         .build())
                 .build()));
+
+        // Integration testing step
+        ShellStep integrationTestStep = ShellStep.Builder.create("IntegrationTests")
+                .commands(Arrays.asList(
+                        "echo Running integration tests",
+                        "mvn verify"
+                ))
+                .build();
+
+        // Add integration tests as post-deployment steps for Alpha stage
+        alphaStage.addPost(integrationTestStep);
 
         StageDeployment prodStage = pipeline.addStage(new AppStage(this, "Prod", StageProps.builder()
                 .env(Environment.builder()
