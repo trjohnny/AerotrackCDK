@@ -41,7 +41,8 @@ public class PipelineStack extends Stack {
                 .synth(ShellStep.Builder.create("Synth")
                         .input(CodePipelineSource.gitHub("trjohnny/AerotrackInfrastructure", "mainline"))
                         .commands(Arrays.asList(
-                                "echo Creating Maven settings.xml",
+                                "/bin/sh",
+                                "-c",
                                 "echo '<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" " +
                                         "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
                                         "xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 " +
@@ -53,8 +54,7 @@ public class PipelineStack extends Stack {
                                                     "<password>${GITHUB_TOKEN}</password>" +
                                                 "</server>" +
                                             "</servers>" +
-                                        "</settings>' > ~/.m2/settings.xml",
-                                "cat ~/.m2/settings.xml",
+                                        "</settings>' > ~/.m2/settings.xml && cat ~/.m2/settings.xml",
                                 "npm install -g aws-cdk",
                                 "cdk synth"
                         ))
