@@ -10,7 +10,7 @@ import java.io.IOException;
 
 
 @Slf4j
-public class RefreshRequestHandler implements RequestHandler<ScheduledEvent, Void> {
+public class AirportsRefreshRequestHandler implements RequestHandler<ScheduledEvent, Void> {
 
 
     public Void handleRequest(ScheduledEvent event, Context context) {
