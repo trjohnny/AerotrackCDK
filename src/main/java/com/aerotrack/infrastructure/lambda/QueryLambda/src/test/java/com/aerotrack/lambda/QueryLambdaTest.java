@@ -15,6 +15,8 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +33,12 @@ class QueryLambdaTest {
     @Mock
     private AerotrackS3Client mockS3Client;
     private QueryLambdaWorkflow queryLambdaWorkflow;
+    private LocalDate today = LocalDate.now();
+    private LocalDate tenDaysLater = today.plusDays(10);
+
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private String startDateString = today.format(formatter);
+    private String endDateString = tenDaysLater.format(formatter);
     private final static String AIRPORT_JSON_STRING = """
             {
               "airports":
@@ -78,7 +86,7 @@ class QueryLambdaTest {
     }
 
     @Test
-    void queryAndProcessFlights_SuccessfulQuery_CorrectProcessing() {
+    void queryAndProcessFlights_SuccessfulQuery_CorrectProcessing() throws IOException {
         when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any()))
                 .thenReturn(getGenericFirstFlights())
                 .thenReturn(getGenericSecondFlights());
@@ -86,8 +94,8 @@ class QueryLambdaTest {
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(2)
                 .maxDays(6)
-                .availabilityStart("20210101")
-                .availabilityEnd("20210110")
+                .availabilityStart(startDateString)
+                .availabilityEnd(endDateString)
                 .returnToSameAirport(true)
                 .departureAirports(List.of("TSF"))
                 .destinationAirports(List.of("VIE"))
@@ -101,15 +109,15 @@ class QueryLambdaTest {
     }
 
     @Test
-    void queryAndProcessFlights_NoMatchingFlights_ReturnsEmptyList() {
+    void queryAndProcessFlights_NoMatchingFlights_ReturnsEmptyList() throws IOException {
 
         when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any())).thenReturn(Collections.emptyList());
 
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(2)
                 .maxDays(6)
-                .availabilityStart("20220101")
-                .availabilityEnd("20220107")
+                .availabilityStart(startDateString)
+                .availabilityEnd(endDateString)
                 .returnToSameAirport(true)
                 .departureAirports(List.of("TSF"))
                 .destinationAirports(List.of("VIE"))
@@ -122,7 +130,7 @@ class QueryLambdaTest {
     }
 
     @Test
-    void queryAndProcessFlights_HighPriceVariations_CorrectSorting() {
+    void queryAndProcessFlights_HighPriceVariations_CorrectSorting() throws IOException {
         when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any()))
                 .thenReturn(getGenericFirstFlights())
                 .thenReturn(getGenericSecondFlights());
@@ -130,8 +138,8 @@ class QueryLambdaTest {
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(2)
                 .maxDays(6)
-                .availabilityStart("20210101")
-                .availabilityEnd("20210107")
+                .availabilityStart(startDateString)
+                .availabilityEnd(endDateString)
                 .returnToSameAirport(true)
                 .departureAirports(List.of("TSF"))
                 .destinationAirports(List.of("VIE"))
@@ -153,7 +161,7 @@ class QueryLambdaTest {
     }
 
     @Test
-    void queryAndProcessFlights_OneDayTrip() {
+    void queryAndProcessFlights_OneDayTrip() throws IOException {
         when(mockDynamoDbClient.scanFlightsBetweenDates(any(), any(), any(), any()))
                 .thenReturn(getGenericFirstFlights())
                 .thenReturn(getGenericSecondFlights());
@@ -161,8 +169,8 @@ class QueryLambdaTest {
         ScanQueryRequest request = ScanQueryRequest.builder()
                 .minDays(0)
                 .maxDays(0)
-                .availabilityStart("2021-01-01")
-                .availabilityEnd("2021-01-07")
+                .availabilityStart(startDateString)
+                .availabilityEnd(endDateString)
                 .returnToSameAirport(true)
                 .departureAirports(List.of("TSF"))
                 .destinationAirports(List.of("VIE"))
