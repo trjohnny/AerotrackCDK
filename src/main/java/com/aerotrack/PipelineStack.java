@@ -50,10 +50,11 @@ public class PipelineStack extends Stack {
                                                 "<server>" +
                                                     "<id>github</id>" +
                                                     String.format("<username>%s</username>", GITHUB_USERNAME) +
-                                                    "<password>'${GITHUB_TOKEN}'</password>" +
+                                                    "<password>${GITHUB_TOKEN}</password>" +
                                                 "</server>" +
                                             "</servers>" +
                                         "</settings>' > ~/.m2/settings.xml",
+                                "echo ~/.m2/settings.xml",
                                 "npm install -g aws-cdk",
                                 "cdk synth"
                         ))
