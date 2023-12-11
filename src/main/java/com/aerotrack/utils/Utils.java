@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.aerotrack.utils.Constant.AIRPORTS_REFRESH_LAMBDA;
+import static com.aerotrack.utils.Constant.FLIGHTS_REFRESH_LAMBDA;
 import static com.aerotrack.utils.Constant.GITHUB_USERNAME;
 import static java.util.Collections.singletonList;
 import static software.amazon.awscdk.BundlingOutput.ARCHIVED;
@@ -31,6 +33,13 @@ public class Utils {
                 .outputType(ARCHIVED);
     }
 
+    public static String getLambdaRequestHandler(String lambdaName) {
+        return switch (lambdaName) {
+            case FLIGHTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.FlightRefreshRequestHandler::handleRequest";
+            case AIRPORTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.AirportsRefreshRequestHandler::handleRequest";
+            default -> throw new IllegalStateException("Unexpected value: " + lambdaName);
+        };
+    }
 
     public static String getResourceName(String resource) {
         String devEnvironment = System.getenv("AEROTRACK_DEV");

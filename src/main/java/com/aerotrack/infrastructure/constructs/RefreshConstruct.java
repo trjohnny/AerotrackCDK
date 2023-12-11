@@ -98,7 +98,7 @@ public class RefreshConstruct extends Construct {
                 .timeout(Duration.minutes(5))
                 .memorySize(256)
                 .logRetention(RetentionDays.ONE_DAY)
-                .handler("com.aerotrack.lambda.RefreshRequestHandler::handleRequest")
+                .handler(Utils.getLambdaRequestHandler(lambdaName))
                 .build();
 
 
