@@ -28,7 +28,7 @@ public class DataConstruct extends Construct {
     public DataConstruct(@NotNull Construct scope, @NotNull String id) {
         super(scope, id);
 
-        this.flightsTable = Table.Builder.create(this, Utils.getResourceName(FLIGHTS_TABLE))
+        this.flightsTable = Table.Builder.create(this, FLIGHTS_TABLE)
                 .partitionKey(Attribute.builder()
                         .name("direction")
                         .type(AttributeType.STRING)
