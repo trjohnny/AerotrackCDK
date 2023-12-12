@@ -60,7 +60,7 @@ public class RefreshConstruct extends Construct {
 
         airportsBucket.grantReadWrite(Objects.requireNonNull(airportsRefreshLambda.getRole()));
 
-        if(!isPersonalDeployment() || true)
+        if(!isPersonalDeployment())
         {
             Rule rule = Rule.Builder.create(this, Utils.getResourceName(Constants.FLIGHTS_REFRESH_EVENT_RULE))
                     .schedule(Schedule.rate(Duration.minutes(Constants.FLIGHTS_REFRESH_EVENT_RATE_MINUTES)))
