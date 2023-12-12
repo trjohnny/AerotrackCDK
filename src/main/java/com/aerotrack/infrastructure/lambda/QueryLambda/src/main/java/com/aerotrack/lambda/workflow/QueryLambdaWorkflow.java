@@ -2,7 +2,7 @@ package com.aerotrack.lambda.workflow;
 
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.Flight;
-import com.aerotrack.model.entities.FlightPair;
+import com.aerotrack.model.entities.Trip;
 import com.aerotrack.model.protocol.ScanQueryRequest;
 import com.aerotrack.model.protocol.ScanQueryResponse;
 import com.aerotrack.model.entities.AirportsJsonFile;
@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 
@@ -38,7 +39,10 @@ public class QueryLambdaWorkflow {
         this.objectMapper = new ObjectMapper();
     }
 
-    public ScanQueryResponse queryAndProcessFlights(ScanQueryRequest request) throws IOException {
+    public ScanQueryResponse queryAndProcessFlights(Integer minDays, Integer maxDays, String availabilityStart, String availabilityEnd,
+                                                    List<String> departureAirports, List<String> destinationAirports, Integer maxChanges,
+                                                    Optional<Integer> minTimeBetweenChangesHours, Optional<Integer> maxTimeBetweenChangesHours,
+                                                    Boolean returnToSameAirport) throws IOException {
         AirportsJsonFile airportsJsonFile = objectMapper.readValue(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME), AirportsJsonFile.class);
         List<Airport> airportList = airportsJsonFile.getAirports();
 
@@ -46,22 +50,22 @@ public class QueryLambdaWorkflow {
         // In this way we limit the number of calls to DynamoDB
         Map<String, Set<String>> airportsConnections = getAirportConnectionsMap(airportList);
 
-        List<FlightPair> flightPairs = new ArrayList<>();
+        List<Trip> Trips = new ArrayList<>();
         Map<String, List<Flight>> allReturnFlights = new HashMap<>();
 
         // Pre-fetch return flights if not returning to the same airport
-        if (!request.getReturnToSameAirport()) {
-            for (String destination : request.getDestinationAirports()) {
+        if (!returnToSameAirport) {
+            for (String destination : destinationAirports) {
                 if (! airportsConnections.containsKey(destination))
                     continue;
 
                 List<Flight> returnFlightsForDestination = new ArrayList<>();
-                for (String returnDeparture : request.getDepartureAirports()) {
+                for (String returnDeparture : departureAirports) {
                     if (! airportsConnections.get(destination).contains(returnDeparture))
                         continue;
 
                     returnFlightsForDestination.addAll(dynamoDbClient.scanFlightsBetweenDates(destination, returnDeparture,
-                            request.getAvailabilityStart(), request.getAvailabilityEnd()));
+                            availabilityStart, availabilityEnd));
                 }
                 allReturnFlights.put(destination, returnFlightsForDestination);
             }
@@ -69,21 +73,21 @@ public class QueryLambdaWorkflow {
 
         log.info("Processing outbound and return flights...");
         // Process outbound and return flights
-        for (String departure : request.getDepartureAirports()) {
+        for (String departure : departureAirports) {
             if (! airportsConnections.containsKey(departure))
                 continue;
 
-            for (String destination : request.getDestinationAirports()) {
+            for (String destination : destinationAirports) {
                 if (! airportsConnections.get(departure).contains(destination))
                     continue;
 
                 List<Flight> outboundFlights = dynamoDbClient.scanFlightsBetweenDates(departure, destination,
-                        request.getAvailabilityStart(), request.getAvailabilityEnd());
+                        availabilityStart, availabilityEnd);
 
                 log.debug(outboundFlights.toString());
 
-                List<Flight> returnFlights = request.getReturnToSameAirport() ?
-                        dynamoDbClient.scanFlightsBetweenDates(destination, departure, request.getAvailabilityStart(), request.getAvailabilityEnd()) :
+                List<Flight> returnFlights = returnToSameAirport ?
+                        dynamoDbClient.scanFlightsBetweenDates(destination, departure, availabilityStart, availabilityEnd) :
                         allReturnFlights.getOrDefault(destination, new ArrayList<>());
 
                 log.debug(returnFlights.toString());
@@ -92,24 +96,24 @@ public class QueryLambdaWorkflow {
                 for (Flight outboundFlight : outboundFlights) {
                     for (Flight returnFlight : returnFlights) {
                         int duration = calculateDuration(outboundFlight, returnFlight);
-                        if (duration < request.getMinDays()) continue;
-                        if (duration > request.getMaxDays()) break;
+                        if (duration < minDays) continue;
+                        if (duration > maxDays) break;
 
                         int totalPrice = (int) (outboundFlight.getPrice() + returnFlight.getPrice());
-                        flightPairs.add(new FlightPair(outboundFlight, returnFlight, totalPrice));
+                        Trips.add(new Trip(List.of(outboundFlight), List.of(returnFlight), totalPrice));
                     }
                 }
             }
         }
 
         log.info("Sorting pairs...");
-        List<FlightPair> sortedPairs = flightPairs.stream()
-                .sorted(Comparator.comparing(FlightPair::getTotalPrice))
+        List<Trip> sortedPairs = Trips.stream()
+                .sorted(Comparator.comparing(Trip::getTotalPrice))
                 .limit(10)
                 .toList();
 
         return ScanQueryResponse.builder()
-                .flightPairs(sortedPairs)
+                .trips(sortedPairs)
                 .build();
     }
 

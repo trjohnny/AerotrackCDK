@@ -1,7 +1,7 @@
 package com.aerotrack.lambda;
 
 import com.aerotrack.model.entities.Flight;
-import com.aerotrack.model.entities.FlightPair;
+import com.aerotrack.model.entities.Trip;
 import com.aerotrack.model.protocol.ScanQueryRequest;
 import com.aerotrack.lambda.workflow.QueryLambdaWorkflow;
 import com.aerotrack.model.protocol.ScanQueryResponse;
@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -91,18 +92,11 @@ class QueryLambdaTest {
                 .thenReturn(getGenericFirstFlights())
                 .thenReturn(getGenericSecondFlights());
 
-        ScanQueryRequest request = ScanQueryRequest.builder()
-                .minDays(2)
-                .maxDays(6)
-                .availabilityStart(startDateString)
-                .availabilityEnd(endDateString)
-                .returnToSameAirport(true)
-                .departureAirports(List.of("TSF"))
-                .destinationAirports(List.of("VIE"))
-                .build();
+        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(2, 6, startDateString, endDateString,
+                List.of("TSF"), List.of("VIE"), 0, Optional.empty(),
+                Optional.empty(), true);
 
-        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(request);
-        List<FlightPair> pairs = results.getFlightPairs();
+        List<Trip> pairs = results.getTrips();
 
         assertFalse(pairs.isEmpty());
         assertEquals(3, pairs.size());
@@ -123,8 +117,10 @@ class QueryLambdaTest {
                 .destinationAirports(List.of("VIE"))
                 .build();
 
-        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(request);
-        List<FlightPair> pairs = results.getFlightPairs();
+        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(2, 6, startDateString, endDateString,
+                List.of("TSF"), List.of("VIE"), 0, Optional.empty(),
+                Optional.empty(), true);
+        List<Trip> pairs = results.getTrips();
 
         assertTrue(pairs.isEmpty());
     }
@@ -145,13 +141,15 @@ class QueryLambdaTest {
                 .destinationAirports(List.of("VIE"))
                 .build();
 
-        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(request);
-        List<FlightPair> pairs = results.getFlightPairs();
+        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(2, 6, startDateString, endDateString,
+                List.of("TSF"), List.of("VIE"), 0, Optional.empty(),
+                Optional.empty(), true);
+        List<Trip> pairs = results.getTrips();
 
         assertFalse(pairs.isEmpty());
 
         List<Integer> prices = pairs.stream()
-                .map(FlightPair::getTotalPrice)
+                .map(Trip::getTotalPrice)
                 .toList();
 
         // Check if each price is less than or equal to the next price in the list
@@ -176,16 +174,18 @@ class QueryLambdaTest {
                 .destinationAirports(List.of("VIE"))
                 .build();
 
-        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(request);
-        List<FlightPair> pairs = results.getFlightPairs();
+        ScanQueryResponse results = queryLambdaWorkflow.queryAndProcessFlights(0, 0, startDateString, endDateString,
+                List.of("TSF"), List.of("VIE"), 0, Optional.empty(),
+                Optional.empty(), true);
+        List<Trip> pairs = results.getTrips();
 
         assertEquals(pairs.size(), 1);
 
-        Flight outboundFlight = pairs.get(0).getOutboundFlight();
-        Flight returnFlight = pairs.get(0).getReturnFlight();
+        List<Flight> outboundFlights = pairs.get(0).getOutboundFlights();
+        List<Flight> returnFlights = pairs.get(0).getReturnFlights();
 
-        assertEquals(outboundFlight.getDepartureDateTime(), "2021-01-03T09:48:17.000");
-        assertEquals(returnFlight.getDepartureDateTime(), "2021-01-03T16:30:41.000");
+        assertEquals(outboundFlights.get(0).getDepartureDateTime(), "2021-01-03T09:48:17.000");
+        assertEquals(returnFlights.get(0).getDepartureDateTime(), "2021-01-03T16:30:41.000");
 
     }
 

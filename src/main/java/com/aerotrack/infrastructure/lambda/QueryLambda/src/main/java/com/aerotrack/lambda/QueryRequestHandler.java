@@ -14,7 +14,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 public class QueryRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -32,7 +34,25 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
             scanQueryRequest.validate(); // Validate the request
             log.info("QueryRequestHandler started with request [{}]", scanQueryRequest);
 
-            ScanQueryResponse scanQueryResponse = queryLambdaWorkflow.queryAndProcessFlights(scanQueryRequest);
+            Integer minDays = scanQueryRequest.getMinDays();
+            Integer maxDaye = scanQueryRequest.getMaxDays();
+
+            String availabilityStart = scanQueryRequest.getAvailabilityStart();
+            String availabilityEnd = scanQueryRequest.getAvailabilityEnd();
+
+            List<String> departureAirports = scanQueryRequest.getDepartureAirports();
+            List<String> destinationAirports = scanQueryRequest.getDestinationAirports();
+
+            Integer maxChanges = Optional.ofNullable(scanQueryRequest.getMaxChanges()).orElse(0);
+
+            Optional<Integer> minTimeBetweenChangesHours = Optional.ofNullable(scanQueryRequest.getMinTimeBetweenChangesHours());
+            Optional<Integer> maxTimeBetweenChangesHours = Optional.ofNullable(scanQueryRequest.getMaxTimeBetweenChangesHours());
+
+            Boolean returnToSameAirport = Optional.ofNullable(scanQueryRequest.getReturnToSameAirport()).orElse(true);
+
+            ScanQueryResponse scanQueryResponse = queryLambdaWorkflow.queryAndProcessFlights(minDays, maxDaye, availabilityStart,
+                    availabilityEnd, departureAirports, destinationAirports, maxChanges, minTimeBetweenChangesHours,
+                    maxTimeBetweenChangesHours, returnToSameAirport);
 
             response.setStatusCode(200);
             response.setHeaders(Map.of(
