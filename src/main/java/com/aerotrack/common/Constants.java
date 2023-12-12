@@ -1,6 +1,6 @@
-package com.aerotrack.utils;
+package com.aerotrack.common;
 
-public class Constant {
+public class Constants {
     public static final String QUERY_LAMBDA = "QueryLambda";
     public static final String FLIGHTS_REFRESH_LAMBDA = "FlightsRefreshLambda";
     public static final String FLIGHTS_REFRESH_LAMBDA_ROLE = "FlightsRefreshLambdaRole";

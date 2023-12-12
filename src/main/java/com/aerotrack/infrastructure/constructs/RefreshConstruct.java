@@ -1,8 +1,10 @@
 package com.aerotrack.infrastructure.constructs;
 
-import com.aerotrack.utils.Utils;
+import com.aerotrack.common.Utils;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.Duration;
+import software.amazon.awscdk.services.cloudwatch.Metric;
+import software.amazon.awscdk.services.cloudwatch.Unit;
 import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.events.Schedule;
@@ -12,22 +14,18 @@ import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
-import software.amazon.awscdk.services.lambda.FunctionProps;
 import software.amazon.awscdk.services.lambda.Runtime;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.s3.Bucket;
 import software.amazon.awscdk.services.s3.assets.AssetOptions;
-import software.amazon.jsii.JsiiObjectRef;
 import software.constructs.Construct;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-import com.aerotrack.utils.Constant;
-import static com.aerotrack.utils.Utils.isPersonalDeployment;
+import com.aerotrack.common.Constants;
+import static com.aerotrack.common.Utils.isPersonalDeployment;
 
 
 public class RefreshConstruct extends Construct {
@@ -37,23 +35,23 @@ public class RefreshConstruct extends Construct {
         super(scope, id);
 
 
-        Function flightsRefreshLambda = createRefreshLambda(Constant.FLIGHTS_REFRESH_LAMBDA,
-                Constant.FLIGHTS_REFRESH_LAMBDA_ROLE,
+        Function flightsRefreshLambda = createRefreshLambda(Constants.FLIGHTS_REFRESH_LAMBDA,
+                Constants.FLIGHTS_REFRESH_LAMBDA_ROLE,
                 new HashMap<>() {
                     {
-                        put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
-                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
+                        put(Constants.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
+                        put(Constants.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
                 });
 
         airportsBucket.grantRead(Objects.requireNonNull(flightsRefreshLambda.getRole()));
         flightsTable.grantWriteData(Objects.requireNonNull(flightsRefreshLambda.getRole()));
 
-        Function airportsRefreshLambda = createRefreshLambda(Constant.AIRPORTS_REFRESH_LAMBDA,
-                Constant.AIRPORTS_REFRESH_LAMBDA_ROLE,
+        Function airportsRefreshLambda = createRefreshLambda(Constants.AIRPORTS_REFRESH_LAMBDA,
+                Constants.AIRPORTS_REFRESH_LAMBDA_ROLE,
                 new HashMap<>() {
                     {
-                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
+                        put(Constants.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
                 });
 
@@ -61,20 +59,25 @@ public class RefreshConstruct extends Construct {
 
         if(!isPersonalDeployment())
         {
-            Rule rule = Rule.Builder.create(this, Utils.getResourceName(Constant.FLIGHTS_REFRESH_EVENT_RULE))
-                    .schedule(Schedule.rate(Duration.minutes(Constant.FLIGHTS_REFRESH_EVENT_RATE_MINUTES)))
+            Rule rule = Rule.Builder.create(this, Utils.getResourceName(Constants.FLIGHTS_REFRESH_EVENT_RULE))
+                    .schedule(Schedule.rate(Duration.minutes(Constants.FLIGHTS_REFRESH_EVENT_RATE_MINUTES)))
                     .build();
 
-            for (int i = 0; i < Constant.FLIGHTS_REFRESH_LAMBDAS_PER_EVENT; i++) {
+            for (int i = 0; i < Constants.FLIGHTS_REFRESH_LAMBDAS_PER_EVENT; i++) {
                 rule.addTarget(new LambdaFunction(flightsRefreshLambda));
             }
 
-            Rule.Builder.create(this, Utils.getResourceName(Constant.AIRPORTS_REFRESH_EVENT_RULE))
-                    .schedule(Schedule.rate(Duration.minutes(Constant.AIRPORTS_REFRESH_EVENT_RATE_MINUTES)))
+            Rule.Builder.create(this, Utils.getResourceName(Constants.AIRPORTS_REFRESH_EVENT_RULE))
+                    .schedule(Schedule.rate(Duration.minutes(Constants.AIRPORTS_REFRESH_EVENT_RATE_MINUTES)))
                     .targets(List.of(new LambdaFunction(airportsRefreshLambda)))
                     .build();
         }
 
+        Metric.Builder.create()
+                .namespace(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
+                .metricName(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_API_CALLS)
+                .unit(Unit.COUNT)
+                .period(Duration.hours(1)).build();
     }
 
     private Function createRefreshLambda(String lambdaName, String roleName, HashMap<String, String> env) {

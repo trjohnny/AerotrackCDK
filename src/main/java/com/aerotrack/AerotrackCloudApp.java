@@ -5,8 +5,8 @@ import software.amazon.awscdk.App;
 import software.amazon.awscdk.Environment;
 import software.amazon.awscdk.StackProps;
 
-import static com.aerotrack.utils.Utils.getResourceName;
-import static com.aerotrack.utils.Utils.isPersonalDeployment;
+import static com.aerotrack.common.Utils.getResourceName;
+import static com.aerotrack.common.Utils.isPersonalDeployment;
 
 public class AerotrackCloudApp {
     public static String PIPILINE_STACK = "PipelineStack";

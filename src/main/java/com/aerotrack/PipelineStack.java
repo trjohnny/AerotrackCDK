@@ -12,10 +12,9 @@ import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
-import static com.aerotrack.utils.Constant.GITHUB_USERNAME;
+import static com.aerotrack.common.Constants.GITHUB_USERNAME;
 
 
 public class PipelineStack extends Stack {

@@ -1,6 +1,6 @@
 package com.aerotrack.infrastructure.constructs;
 
-import com.aerotrack.utils.Utils;
+import com.aerotrack.common.Utils;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.Duration;
 import software.amazon.awscdk.services.apigateway.ApiKey;
@@ -29,7 +29,7 @@ import software.constructs.Construct;
 import java.util.HashMap;
 import java.util.List;
 
-import com.aerotrack.utils.Constant;
+import com.aerotrack.common.Constants;
 
 
 public class ApiConstruct extends Construct {
@@ -39,7 +39,7 @@ public class ApiConstruct extends Construct {
     public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket airportsBucket, Table flightsTable) {
         super(scope, id);
 
-        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constant.QUERY_LAMBDA_ROLE))
+        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constants.QUERY_LAMBDA_ROLE))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(List.of(
                         ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
@@ -49,19 +49,19 @@ public class ApiConstruct extends Construct {
         airportsBucket.grantRead(lambdaRole);
         flightsTable.grantReadData(lambdaRole);
 
-        RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(Constant.REST_API_GATEWAY))
+        RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(Constants.REST_API_GATEWAY))
                 .defaultCorsPreflightOptions(CorsOptions.builder()
                         .allowOrigins(Cors.ALL_ORIGINS)
                         .allowMethods(Cors.ALL_METHODS)
                         .build())
                 .build();
 
-        ApiKey key = ApiKey.Builder.create(this, Constant.API_KEY).build();
+        ApiKey key = ApiKey.Builder.create(this, Constants.API_KEY).build();
 
-        UsagePlan usagePlan = UsagePlan.Builder.create(this, Utils.getResourceName(Constant.USAGE_PLAN))
+        UsagePlan usagePlan = UsagePlan.Builder.create(this, Utils.getResourceName(Constants.USAGE_PLAN))
                 .throttle(ThrottleSettings.builder()
-                        .burstLimit(Constant.API_BURST_LIMIT)
-                        .rateLimit(Constant.API_RATE_LIMIT)
+                        .burstLimit(Constants.API_BURST_LIMIT)
+                        .rateLimit(Constants.API_RATE_LIMIT)
                         .build())
                 .build();
 
@@ -71,23 +71,23 @@ public class ApiConstruct extends Construct {
 
         usagePlan.addApiKey(key);
 
-        Function queryFunction = new Function(this, Utils.getResourceName(Constant.QUERY_LAMBDA), FunctionProps.builder()
+        Function queryFunction = new Function(this, Utils.getResourceName(Constants.QUERY_LAMBDA), FunctionProps.builder()
                 .runtime(Runtime.JAVA_17)
                 .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
                         .bundling(Utils.getLambdaBuilderOptions()
-                                .command(Utils.getLambdaPackagingInstructions(Constant.QUERY_LAMBDA))
+                                .command(Utils.getLambdaPackagingInstructions(Constants.QUERY_LAMBDA))
                                 .build())
                         .build()))
                 .environment(new HashMap<>() {
                     {
-                        put(Constant.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
-                        put(Constant.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
+                        put(Constants.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
+                        put(Constants.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
                 })
                 .handler("com.aerotrack.lambda.QueryRequestHandler::handleRequest")
                 .role(lambdaRole)
-                .memorySize(Constant.QUERY_LAMBDA_MEMORY_SIZE_MB)
-                .timeout(Duration.seconds(Constant.QUERY_LAMBDA_TIMEOUT_SECONDS))
+                .memorySize(Constants.QUERY_LAMBDA_MEMORY_SIZE_MB)
+                .timeout(Duration.seconds(Constants.QUERY_LAMBDA_TIMEOUT_SECONDS))
                 .logRetention(RetentionDays.ONE_DAY)
                 .build());
 

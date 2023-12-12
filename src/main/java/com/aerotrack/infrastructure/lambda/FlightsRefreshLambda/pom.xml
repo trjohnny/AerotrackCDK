@@ -37,6 +37,17 @@
             <version>3.10.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-cloudwatch</artifactId>
+            <version>1.12.609</version>
+        </dependency>
+
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>cloudwatch</artifactId>
+            <version>2.21.42</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-io</groupId>
@@ -72,13 +83,13 @@
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-model</artifactId>
-            <version>1.0.12</version>
+            <version>1.2.3</version>
         </dependency>
 
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-utils</artifactId>
-            <version>1.1.5</version>
+            <version>1.1.7</version>
         </dependency>
 
         <dependency>

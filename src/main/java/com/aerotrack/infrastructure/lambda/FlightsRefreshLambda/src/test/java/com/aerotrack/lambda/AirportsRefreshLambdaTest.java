@@ -3,8 +3,10 @@ package com.aerotrack.lambda;
 import com.aerotrack.lambda.workflow.FlightRefreshWorkflow;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.Flight;
+import com.aerotrack.model.entities.FlightList;
+import com.aerotrack.utils.clients.api.currencyConverter.CurrencyConverter;
+import com.aerotrack.utils.clients.api.ryanair.RyanairClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import com.aerotrack.utils.clients.ryanair.RyanairClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,6 +38,8 @@ class AirportsRefreshLambdaTest {
     private DynamoDbEnhancedClient mockDynamoDbClient;
     @Mock
     private DynamoDbTable<Flight> mockFlightsTable;
+    @Mock
+    private CurrencyConverter currencyConverter;
 
     private FlightRefreshWorkflow flightRefreshWorkflow;
 
@@ -57,7 +62,8 @@ class AirportsRefreshLambdaTest {
         MockitoAnnotations.openMocks(this);
 
         when(mockS3Client.getStringObjectFromS3(any())).thenReturn(AIRPORT_JSON_STRING);
-        flightRefreshWorkflow = new FlightRefreshWorkflow(mockS3Client, mockDynamoDbClient, mockRyanairClient);
+        when(currencyConverter.getConversionFactor(any(), any())).thenReturn(1.0);
+        flightRefreshWorkflow = new FlightRefreshWorkflow(mockS3Client, mockDynamoDbClient, mockRyanairClient, currencyConverter);
 
     }
 
@@ -81,7 +87,7 @@ class AirportsRefreshLambdaTest {
     @Test
     void testRefreshFlights() throws IOException, InterruptedException {
         when(mockS3Client.getStringObjectFromS3(anyString())).thenReturn(AIRPORT_JSON_STRING);
-        when(mockRyanairClient.getFlights(anyString(), anyString(), any(LocalDate.class))).thenReturn(List.of(new Flight()));
+        when(mockRyanairClient.getFlights(anyString(), anyString(), any(LocalDate.class))).thenReturn(new FlightList(new ArrayList<>(), "eur"));
         when(mockDynamoDbClient.table(anyString(), any(TableSchema.class))).thenReturn(mockFlightsTable);
 
         flightRefreshWorkflow.refreshFlights();

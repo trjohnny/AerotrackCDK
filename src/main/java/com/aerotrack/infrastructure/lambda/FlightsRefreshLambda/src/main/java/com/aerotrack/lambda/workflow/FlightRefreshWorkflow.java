@@ -3,8 +3,10 @@ package com.aerotrack.lambda.workflow;
 import com.aerotrack.model.entities.Flight;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.AirportsJsonFile;
+import com.aerotrack.model.entities.FlightList;
 import com.aerotrack.utils.Constants;
-import com.aerotrack.utils.clients.ryanair.RyanairClient;
+import com.aerotrack.utils.clients.api.currencyConverter.CurrencyConverter;
+import com.aerotrack.utils.clients.api.ryanair.RyanairClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,12 +17,24 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
+import software.amazon.awssdk.services.cloudwatch.model.Dimension;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
+import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
+import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 import software.amazon.awssdk.utils.Pair;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.aerotrack.utils.Constants.AIRPORTS_OBJECT_NAME;
 
@@ -32,15 +46,16 @@ public class FlightRefreshWorkflow {
     private final AerotrackS3Client s3Client;
     private final RyanairClient ryanairClient;
     private final DynamoDbTable<Flight> flightsTable;
+    private final CurrencyConverter currencyConverter;
 
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
     public static final int MAX_REQUESTS_PER_LAMBDA = 900;
 
-    public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairClient ryanairClient) {
+    public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairClient ryanairClient, CurrencyConverter currencyConverter) {
         this.s3Client = s3Client;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
         this.ryanairClient = ryanairClient;
-
+        this.currencyConverter = currencyConverter;
         this.flightsTable = dynamoDbEnhancedClient.table(System.getenv(Constants.FLIGHT_TABLE_ENV_VAR), TableSchema.fromBean(Flight.class));
     }
     public void refreshFlights() throws IOException, InterruptedException {
@@ -48,23 +63,52 @@ public class FlightRefreshWorkflow {
         AirportsJsonFile airportList = getAvailableAirports();
         Pair<String, String> randomConnection;
         LocalDate randomDate;
-        List<Flight> flights;
 
+        List<FlightList> flightAndPrice = new ArrayList<>();
+        List<Flight> flights = new ArrayList<>();
+        Map<String, Double> conversionRate = new HashMap<>();
+
+        int totalSuccess = 0;
         for(int i = 0; i < MAX_REQUESTS_PER_LAMBDA; i++) {
 
             try {
                 randomConnection = getRandomAirportPair(airportList);
                 randomDate = LocalDate.now().plusDays(pickNumberWithWeightedProbability(0, 365));
-                flights = ryanairClient.getFlights(randomConnection.left(), randomConnection.right(), randomDate);
-                writeFlightsToTable(flights);
+                FlightList flightList = ryanairClient.getFlights(randomConnection.left(), randomConnection.right(), randomDate);
+                flightAndPrice.add(flightList);
+                conversionRate.put(flightList.getCurrency(), null);
+                totalSuccess++;
                 log.info("Success: {}", i);
             } catch (HttpException httpException) {
                 log.error("HttpException caught: {}", httpException.message());
-                if (httpException.code() == 400) return;
+                if (httpException.code() == 400) break;
             } catch (RuntimeException e) {
                 log.error("A RuntimeException exception occurred for the single request: " + e);
             }
         }
+
+        conversionRate.replaceAll((c, v) -> currencyConverter.getConversionFactor(c, "eur"));
+
+        for(FlightList flightList : flightAndPrice) {
+            for(Flight flight : flightList.getFlights()) {
+                flight.setPrice(flight.getPrice()*conversionRate.get(flightList.getCurrency()));
+            }
+            writeFlightsToTable(flightList.getFlights()); // there's a limit to the batch size
+        }
+
+
+        PutMetricDataRequest request = PutMetricDataRequest.builder()
+                .namespace(Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
+                .metricData(
+                        List.of(MetricDatum.builder()
+                        .metricName(Constants.METRIC_REFRESH_FLIGHTS_API_CALLS)
+                        .value(totalSuccess+0.0)
+                        .timestamp(Instant.now())
+                        .build()))
+                .build();
+
+        CloudWatchClient cw = CloudWatchClient.create();
+        cw.putMetricData(request);
     }
 
     public AirportsJsonFile getAvailableAirports() throws IOException {

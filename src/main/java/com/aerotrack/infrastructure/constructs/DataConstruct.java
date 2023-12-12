@@ -1,6 +1,6 @@
 package com.aerotrack.infrastructure.constructs;
 
-import com.aerotrack.utils.Utils;
+import com.aerotrack.common.Utils;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.services.dynamodb.Attribute;
@@ -17,9 +17,9 @@ import software.constructs.Construct;
 
 import java.util.List;
 
-import static com.aerotrack.utils.Constant.AEROTRACK_BUCKET;
-import static com.aerotrack.utils.Constant.AIRPORTS_DEPLOYMENT;
-import static com.aerotrack.utils.Constant.FLIGHTS_TABLE;
+import static com.aerotrack.common.Constants.AEROTRACK_BUCKET;
+import static com.aerotrack.common.Constants.AIRPORTS_DEPLOYMENT;
+import static com.aerotrack.common.Constants.FLIGHTS_TABLE;
 
 @Getter
 public class DataConstruct extends Construct {
@@ -39,6 +39,7 @@ public class DataConstruct extends Construct {
                         .build())
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .deletionProtection(false)
+                .timeToLiveAttribute("TTL")
                 .build();
 
         this.airportsBucket = Bucket.Builder.create(this, Utils.getResourceName(AEROTRACK_BUCKET))

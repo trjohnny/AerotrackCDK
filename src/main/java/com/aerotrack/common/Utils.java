@@ -1,4 +1,4 @@
-package com.aerotrack.utils;
+package com.aerotrack.common;
 
 import software.amazon.awscdk.BundlingOptions;
 import software.amazon.awscdk.DockerVolume;
@@ -9,9 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.aerotrack.utils.Constant.AIRPORTS_REFRESH_LAMBDA;
-import static com.aerotrack.utils.Constant.FLIGHTS_REFRESH_LAMBDA;
-import static com.aerotrack.utils.Constant.GITHUB_USERNAME;
 import static java.util.Collections.singletonList;
 import static software.amazon.awscdk.BundlingOutput.ARCHIVED;
 
@@ -35,8 +32,8 @@ public class Utils {
 
     public static String getLambdaRequestHandler(String lambdaName) {
         return switch (lambdaName) {
-            case FLIGHTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.FlightRefreshRequestHandler::handleRequest";
-            case AIRPORTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.AirportsRefreshRequestHandler::handleRequest";
+            case Constants.FLIGHTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.FlightRefreshRequestHandler::handleRequest";
+            case Constants.AIRPORTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.AirportsRefreshRequestHandler::handleRequest";
             default -> throw new IllegalStateException("Unexpected value: " + lambdaName);
         };
     }
@@ -66,7 +63,7 @@ public class Utils {
                                     "<servers>" +
                                         "<server>" +
                                             "<id>github</id>" +
-                                            String.format("<username>%s</username>", GITHUB_USERNAME) +
+                                            String.format("<username>%s</username>", Constants.GITHUB_USERNAME) +
                                             "<password>${GITHUB_TOKEN}</password>" +
                                         "</server>" +
                                     "</servers>" +
