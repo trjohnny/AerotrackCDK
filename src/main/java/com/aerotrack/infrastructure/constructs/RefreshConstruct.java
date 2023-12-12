@@ -74,26 +74,26 @@ public class RefreshConstruct extends Construct {
                     .schedule(Schedule.rate(Duration.minutes(Constants.AIRPORTS_REFRESH_EVENT_RATE_MINUTES)))
                     .targets(List.of(new LambdaFunction(airportsRefreshLambda)))
                     .build();
+
+            Metric apiCallMetric = Metric.Builder.create()
+                    .namespace(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
+                    .metricName(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_API_CALLS)
+                    .statistic("Sum")
+                    .unit(Unit.COUNT)
+                    .period(Duration.hours(1))
+                    .build();
+
+            Dashboard dashboard = Dashboard.Builder.create(this, "AerotrackDashboard")
+                    .dashboardName("AerotrackDashboard")
+                    .defaultInterval(Duration.hours(1))
+                    .build();
+
+            dashboard.addWidgets(new GraphWidget(GraphWidgetProps.builder()
+                    .title("Ryanair API Calls")
+                    .left(List.of(apiCallMetric))
+                    .width(10)
+                    .build()));
         }
-
-        Metric apiCallMetric = Metric.Builder.create()
-                .namespace(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
-                .metricName(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_API_CALLS)
-                .statistic("Sum")
-                .unit(Unit.COUNT)
-                .period(Duration.hours(1))
-                .build();
-
-        Dashboard dashboard = Dashboard.Builder.create(this, "AerotrackDashboard")
-                .dashboardName("AerotrackDashboard")
-                .defaultInterval(Duration.hours(1))
-                .build();
-
-        dashboard.addWidgets(new GraphWidget(GraphWidgetProps.builder()
-                .title("Ryanair API Calls")
-                .left(List.of(apiCallMetric))
-                .width(10)
-                .build()));
     }
 
     private Function createRefreshLambda(String lambdaName, String roleName, HashMap<String, String> env) {
