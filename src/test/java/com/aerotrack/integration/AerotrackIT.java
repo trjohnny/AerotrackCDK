@@ -1,6 +1,6 @@
 package com.aerotrack.integration;
 
-import com.aerotrack.model.entities.FlightPair;
+import com.aerotrack.model.entities.Trip;
 import com.aerotrack.model.protocol.ScanQueryRequest;
 import com.aerotrack.utils.clients.apigateway.AerotrackApiClient;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +41,7 @@ public class AerotrackIT {
         // Populate scanQueryRequest with test data
 
         // Execute the API call
-        List<FlightPair> flightPairs = aerotrackApiClient.getBestFlight(scanQueryRequest);
+        List<Trip> flightPairs = aerotrackApiClient.getBestFlight(scanQueryRequest);
 
         // Assertions to verify the response
         assertNotNull(flightPairs, "Flight pairs should not be null");

@@ -16,24 +16,24 @@
         "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       },
       {
-        "airportCode" : "LON",
-        "name" : "Londra",
-        "countryCode" : "EN",
-        "connections" : ["VCE","TSF","BRI"],
+        "airportCode" : "PRG",
+        "name" : "Praga",
+        "countryCode" : "CK",
+        "connections" : ["TSF"],
         "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       },
       {
         "airportCode" : "TSF",
         "name" : "Venice (Treviso)",
         "countryCode" : "IE",
-        "connections" : ["AHO","VIE","BER","CGN","DUB","HEL"],
+        "connections" : ["PRG"],
         "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       },
       {
         "airportCode" : "DUB",
         "name" : "Dublin",
         "countryCode" : "IE",
-        "connections" : ["VCE","TSF","ATH","BCN","BOH","LON"],
+        "connections" : ["VCE","TSF","ATH","BCN","BOH"],
         "lastUpdatedDateTime": "2023-12-10T00:00:00.000Z"
       }
 

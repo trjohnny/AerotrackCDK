@@ -18,10 +18,8 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
-import software.amazon.awssdk.services.cloudwatch.model.Dimension;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
-import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 import software.amazon.awssdk.utils.Pair;
 
 import java.io.IOException;
@@ -29,12 +27,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.aerotrack.utils.Constants.AIRPORTS_OBJECT_NAME;
 
@@ -69,7 +64,7 @@ public class FlightRefreshWorkflow {
         Map<String, Double> conversionRate = new HashMap<>();
 
         int totalSuccess = 0;
-        for(int i = 0; i < MAX_REQUESTS_PER_LAMBDA; i++) {
+        for (int i = 0; i < MAX_REQUESTS_PER_LAMBDA; i++) {
 
             try {
                 randomConnection = getRandomAirportPair(airportList);
@@ -107,8 +102,9 @@ public class FlightRefreshWorkflow {
                         .build()))
                 .build();
 
-        CloudWatchClient cw = CloudWatchClient.create();
-        cw.putMetricData(request);
+        try (CloudWatchClient cw = CloudWatchClient.create()) {
+            cw.putMetricData(request);
+        }
     }
 
     public AirportsJsonFile getAvailableAirports() throws IOException {

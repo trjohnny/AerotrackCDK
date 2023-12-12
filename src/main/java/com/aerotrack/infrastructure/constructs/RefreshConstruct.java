@@ -3,6 +3,9 @@ package com.aerotrack.infrastructure.constructs;
 import com.aerotrack.common.Utils;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.Duration;
+import software.amazon.awscdk.services.cloudwatch.Dashboard;
+import software.amazon.awscdk.services.cloudwatch.GraphWidget;
+import software.amazon.awscdk.services.cloudwatch.GraphWidgetProps;
 import software.amazon.awscdk.services.cloudwatch.Metric;
 import software.amazon.awscdk.services.cloudwatch.Unit;
 import software.amazon.awscdk.services.dynamodb.Table;
@@ -57,7 +60,7 @@ public class RefreshConstruct extends Construct {
 
         airportsBucket.grantReadWrite(Objects.requireNonNull(airportsRefreshLambda.getRole()));
 
-        if(!isPersonalDeployment())
+        if(!isPersonalDeployment() || true)
         {
             Rule rule = Rule.Builder.create(this, Utils.getResourceName(Constants.FLIGHTS_REFRESH_EVENT_RULE))
                     .schedule(Schedule.rate(Duration.minutes(Constants.FLIGHTS_REFRESH_EVENT_RATE_MINUTES)))
@@ -73,18 +76,32 @@ public class RefreshConstruct extends Construct {
                     .build();
         }
 
-        Metric.Builder.create()
+        Metric apiCallMetric = Metric.Builder.create()
                 .namespace(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
                 .metricName(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_API_CALLS)
+                .statistic("Sum")
                 .unit(Unit.COUNT)
-                .period(Duration.hours(1)).build();
+                .period(Duration.hours(1))
+                .build();
+
+        Dashboard dashboard = Dashboard.Builder.create(this, "AerotrackDashboard")
+                .dashboardName("AerotrackDashboard")
+                .defaultInterval(Duration.hours(1))
+                .build();
+
+        dashboard.addWidgets(new GraphWidget(GraphWidgetProps.builder()
+                .title("Ryanair API Calls")
+                .left(List.of(apiCallMetric))
+                .width(10)
+                .build()));
     }
 
     private Function createRefreshLambda(String lambdaName, String roleName, HashMap<String, String> env) {
         Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(roleName))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(List.of(
-                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
+                        ManagedPolicy.fromAwsManagedPolicyName("CloudWatchFullAccess")
                 ))
                 .build();
 
