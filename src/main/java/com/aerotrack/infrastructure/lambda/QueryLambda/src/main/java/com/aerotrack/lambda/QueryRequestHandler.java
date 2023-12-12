@@ -35,7 +35,10 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
             ScanQueryResponse scanQueryResponse = queryLambdaWorkflow.queryAndProcessFlights(scanQueryRequest);
 
             response.setStatusCode(200);
-            response.setHeaders(Map.of("Content-Type", "application/json"));
+            response.setHeaders(Map.of(
+                    "Content-Type", "application/json",
+                    "Access-Control-Allow-Origin", "*",
+                    "Access-Control-Allow-Methods", "OPTIONS,POST"));
             response.setBody(objectMapper.writeValueAsString(scanQueryResponse));
         } catch (IllegalArgumentException e) {
             log.error("Validation error: " + e.getMessage());
