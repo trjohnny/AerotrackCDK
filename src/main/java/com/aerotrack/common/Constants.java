@@ -28,7 +28,7 @@ public class Constants {
     public static final Integer QUERY_LAMBDA_MEMORY_SIZE_MB = 2048;
     public static final Integer QUERY_LAMBDA_TIMEOUT_SECONDS = 30;
     public static final Integer FLIGHTS_REFRESH_LAMBDAS_PER_EVENT = 5;
-    public static final Integer FLIGHTS_REFRESH_EVENT_RATE_MINUTES = 10;
+    public static final Integer FLIGHTS_REFRESH_EVENT_RATE_MINUTES = 9;
     public static final Integer AIRPORTS_REFRESH_EVENT_RATE_MINUTES = 30;
 
 
