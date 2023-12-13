@@ -35,7 +35,7 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
             log.info("QueryRequestHandler started with request [{}]", scanQueryRequest);
 
             Integer minDays = scanQueryRequest.getMinDays();
-            Integer maxDaye = scanQueryRequest.getMaxDays();
+            Integer maxDays = scanQueryRequest.getMaxDays();
 
             String availabilityStart = scanQueryRequest.getAvailabilityStart();
             String availabilityEnd = scanQueryRequest.getAvailabilityEnd();
@@ -50,7 +50,7 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
 
             Boolean returnToSameAirport = Optional.ofNullable(scanQueryRequest.getReturnToSameAirport()).orElse(true);
 
-            ScanQueryResponse scanQueryResponse = queryLambdaWorkflow.queryAndProcessFlights(minDays, maxDaye, availabilityStart,
+            ScanQueryResponse scanQueryResponse = queryLambdaWorkflow.queryAndProcessFlights(minDays, maxDays, availabilityStart,
                     availabilityEnd, departureAirports, destinationAirports, maxChanges, minTimeBetweenChangesHours,
                     maxTimeBetweenChangesHours, returnToSameAirport);
 

@@ -28,6 +28,7 @@ import java.util.Set;
 
 @Slf4j
 public class QueryLambdaWorkflow {
+    private static final long TRIPS_RETURN_LIMIT = 1000;
     private final AerotrackDynamoDbClient dynamoDbClient;
     private final AerotrackS3Client s3Client;
     private final ObjectMapper objectMapper;
@@ -109,8 +110,10 @@ public class QueryLambdaWorkflow {
         log.info("Sorting pairs...");
         List<Trip> sortedPairs = Trips.stream()
                 .sorted(Comparator.comparing(Trip::getTotalPrice))
-                .limit(10)
+                .limit(TRIPS_RETURN_LIMIT)
                 .toList();
+
+        log.info("Size: " + sortedPairs.size());
 
         return ScanQueryResponse.builder()
                 .trips(sortedPairs)
