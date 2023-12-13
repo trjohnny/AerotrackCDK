@@ -28,7 +28,7 @@ import java.util.Set;
 
 @Slf4j
 public class QueryLambdaWorkflow {
-    private static final long TRIPS_RETURN_LIMIT = 1000;
+    private static final long TRIPS_RETURN_LIMIT = 10000;
     private final AerotrackDynamoDbClient dynamoDbClient;
     private final AerotrackS3Client s3Client;
     private final ObjectMapper objectMapper;
