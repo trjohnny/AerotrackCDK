@@ -64,9 +64,6 @@ public class PipelineStack extends Stack {
                         .build())
                 .build();
 
-
-
-
         StageDeployment alphaStage = pipeline.addStage(new AppStage(this, "Alpha", StageProps.builder()
                 .env(Environment.builder()
                         .account("073873382417")
