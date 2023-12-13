@@ -51,7 +51,7 @@ public class QueryLambdaWorkflow {
         // In this way we limit the number of calls to DynamoDB
         Map<String, Set<String>> airportsConnections = getAirportConnectionsMap(airportList);
 
-        List<Trip> Trips = new ArrayList<>();
+        List<Trip> trips = new ArrayList<>();
         Map<String, List<Flight>> allReturnFlights = new HashMap<>();
 
         // Pre-fetch return flights if not returning to the same airport
@@ -101,19 +101,18 @@ public class QueryLambdaWorkflow {
                         if (duration > maxDays) break;
 
                         int totalPrice = (int) (outboundFlight.getPrice() + returnFlight.getPrice());
-                        Trips.add(new Trip(List.of(outboundFlight), List.of(returnFlight), totalPrice));
+                        trips.add(new Trip(List.of(outboundFlight), List.of(returnFlight), totalPrice));
                     }
                 }
             }
         }
 
-        log.info("Sorting pairs...");
-        List<Trip> sortedPairs = Trips.stream()
+        log.info("Sorting pairs... Size: " + trips.size());
+        List<Trip> sortedPairs = trips.stream()
                 .sorted(Comparator.comparing(Trip::getTotalPrice))
                 .limit(TRIPS_RETURN_LIMIT)
                 .toList();
 
-        log.info("Size: " + sortedPairs.size());
 
         return ScanQueryResponse.builder()
                 .trips(sortedPairs)
