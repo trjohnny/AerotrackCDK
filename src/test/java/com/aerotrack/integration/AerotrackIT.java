@@ -1,5 +1,7 @@
 package com.aerotrack.integration;
 
+import com.aerotrack.common.Constants;
+import com.aerotrack.common.CrossAccountParameterFetcher;
 import com.aerotrack.common.InfraUtils;
 import com.aerotrack.model.entities.AerotrackStage;
 import com.aerotrack.model.entities.Flight;
@@ -69,7 +71,12 @@ public class AerotrackIT {
                 .dynamoDbClient(dynamoDbClient)
                 .build();
 
-        flightsTable = enhancedClient.table(System.getenv("FLIGHTS_TABLE"), TableSchema.fromBean(Flight.class));
+        String roleArn = "arn:aws:iam::073873382417:role/BuildParametersRole";
+        Region region = Region.EU_WEST_1;
+
+        String flightsTableName = CrossAccountParameterFetcher.fetchParameter(roleArn, InfraUtils.getResourceName(Constants.FLIGHTS_TABLE), region);
+
+        flightsTable = enhancedClient.table(flightsTableName, TableSchema.fromBean(Flight.class));
         // Insert test data
         LocalDateTime departureTime1 = LocalDateTime.now().plusYears(1).minusDays(5);
         LocalDateTime departureTime2 = departureTime1.plusDays(2);
@@ -83,7 +90,6 @@ public class AerotrackIT {
 
     @BeforeEach
     public void setUp() {
-        // Initialize your API client
         aerotrackApiClient = AerotrackApiClient.create(getStage());
     }
 
@@ -95,8 +101,6 @@ public class AerotrackIT {
 
     @Test
     public void testGetBestFlight() {
-        // Create a ScanQueryRequest with the required parameters for your test
-
         ScanQueryRequest scanQueryRequest = ScanQueryRequest.builder()
                 .minDays(1)
                 .maxDays(5)
@@ -106,12 +110,9 @@ public class AerotrackIT {
                 .departureAirports(List.of("VCE"))
                 .destinationAirports(List.of("DUB"))
                 .build();
-        // Populate scanQueryRequest with test data
 
-        // Execute the API call
         List<Trip> trips = aerotrackApiClient.getBestFlight(scanQueryRequest);
 
-        // Assertions to verify the response
         assertNotNull(trips, "Flight pairs should not be null");
         assertFalse(trips.isEmpty());
 
