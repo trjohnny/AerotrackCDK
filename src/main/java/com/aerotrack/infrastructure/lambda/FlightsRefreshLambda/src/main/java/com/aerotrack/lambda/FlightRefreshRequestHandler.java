@@ -1,8 +1,8 @@
 package com.aerotrack.lambda;
 
 import com.aerotrack.lambda.workflow.FlightRefreshWorkflow;
-import com.aerotrack.utils.clients.api.currencyConverter.CurrencyConverter;
-import com.aerotrack.utils.clients.api.ryanair.RyanairClient;
+import com.aerotrack.utils.clients.api.CurrencyConverterApiClient;
+import com.aerotrack.utils.clients.api.RyanairApiClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -17,8 +17,8 @@ import java.io.IOException;
 public class FlightRefreshRequestHandler implements RequestHandler<ScheduledEvent, Void> {
     private final AerotrackS3Client s3Client = AerotrackS3Client.create();
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient = DynamoDbEnhancedClient.create();
-    private final RyanairClient ryanairClient = RyanairClient.create();
-    private final CurrencyConverter currencyConverter = CurrencyConverter.create();
+    private final RyanairApiClient ryanairClient = RyanairApiClient.create();
+    private final CurrencyConverterApiClient currencyConverter = CurrencyConverterApiClient.create();
 
 
     public Void handleRequest(ScheduledEvent event, Context context) {

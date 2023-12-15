@@ -4,8 +4,8 @@ import com.aerotrack.lambda.workflow.FlightRefreshWorkflow;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.Flight;
 import com.aerotrack.model.entities.FlightList;
-import com.aerotrack.utils.clients.api.currencyConverter.CurrencyConverter;
-import com.aerotrack.utils.clients.api.ryanair.RyanairClient;
+import com.aerotrack.utils.clients.api.CurrencyConverterApiClient;
+import com.aerotrack.utils.clients.api.RyanairApiClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,13 +33,13 @@ class AirportsRefreshLambdaTest {
     @Mock
     private AerotrackS3Client mockS3Client;
     @Mock
-    private RyanairClient mockRyanairClient;
+    private RyanairApiClient mockRyanairClient;
     @Mock
     private DynamoDbEnhancedClient mockDynamoDbClient;
     @Mock
     private DynamoDbTable<Flight> mockFlightsTable;
     @Mock
-    private CurrencyConverter currencyConverter;
+    private CurrencyConverterApiClient currencyConverter;
 
     private FlightRefreshWorkflow flightRefreshWorkflow;
 

@@ -5,8 +5,8 @@ import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.AirportsJsonFile;
 import com.aerotrack.model.entities.FlightList;
 import com.aerotrack.utils.Constants;
-import com.aerotrack.utils.clients.api.currencyConverter.CurrencyConverter;
-import com.aerotrack.utils.clients.api.ryanair.RyanairClient;
+import com.aerotrack.utils.clients.api.CurrencyConverterApiClient;
+import com.aerotrack.utils.clients.api.RyanairApiClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,14 +39,14 @@ public class FlightRefreshWorkflow {
 
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final AerotrackS3Client s3Client;
-    private final RyanairClient ryanairClient;
+    private final RyanairApiClient ryanairClient;
     private final DynamoDbTable<Flight> flightsTable;
-    private final CurrencyConverter currencyConverter;
+    private final CurrencyConverterApiClient currencyConverter;
 
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
     public static final int MAX_REQUESTS_PER_LAMBDA = 900;
 
-    public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairClient ryanairClient, CurrencyConverter currencyConverter) {
+    public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairApiClient ryanairClient, CurrencyConverterApiClient currencyConverter) {
         this.s3Client = s3Client;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
         this.ryanairClient = ryanairClient;
@@ -60,7 +60,6 @@ public class FlightRefreshWorkflow {
         LocalDate randomDate;
 
         List<FlightList> flightAndPrice = new ArrayList<>();
-        List<Flight> flights = new ArrayList<>();
         Map<String, Double> conversionRate = new HashMap<>();
 
         int totalSuccess = 0;
@@ -113,7 +112,7 @@ public class FlightRefreshWorkflow {
         return new ObjectMapper().readValue(airportsJson, new TypeReference<>() {});
     }
 
-    public void writeFlightsToTable(List<Flight> flights) {
+    private void writeFlightsToTable(List<Flight> flights) {
         if(flights.isEmpty())
             return;
 
@@ -154,7 +153,7 @@ public class FlightRefreshWorkflow {
         return min;
     }
 
-    public Pair<String, String> getRandomAirportPair(AirportsJsonFile airportList) {
+    private Pair<String, String> getRandomAirportPair(AirportsJsonFile airportList) {
 
         int totalConnections = airportList.getAirports().stream()
                 .mapToInt(airport -> airport.getConnections().size())
