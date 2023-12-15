@@ -43,11 +43,6 @@ public class DataConstruct extends Construct {
                 .timeToLiveAttribute("TTL")
                 .build();
 
-        StringParameter.Builder.create(this, InfraUtils.getResourceName("FlightsTableNameParameter"))
-                .parameterName(FLIGHTS_TABLE)
-                .stringValue(flightsTable.getTableName())
-                .build();
-
         this.airportsBucket = Bucket.Builder.create(this, InfraUtils.getResourceName(AEROTRACK_BUCKET))
                 .objectOwnership(ObjectOwnership.BUCKET_OWNER_ENFORCED)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
