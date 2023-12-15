@@ -3,7 +3,6 @@ package com.aerotrack.lambda.workflow;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.Flight;
 import com.aerotrack.model.entities.Trip;
-import com.aerotrack.model.protocol.ScanQueryRequest;
 import com.aerotrack.model.protocol.ScanQueryResponse;
 import com.aerotrack.model.entities.AirportsJsonFile;
 import com.aerotrack.utils.clients.dynamodb.AerotrackDynamoDbClient;
