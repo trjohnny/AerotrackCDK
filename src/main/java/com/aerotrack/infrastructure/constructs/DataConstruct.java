@@ -1,6 +1,6 @@
 package com.aerotrack.infrastructure.constructs;
 
-import com.aerotrack.common.Utils;
+import com.aerotrack.common.InfraUtils;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.services.dynamodb.Attribute;
@@ -13,6 +13,7 @@ import software.amazon.awscdk.services.s3.BucketEncryption;
 import software.amazon.awscdk.services.s3.ObjectOwnership;
 import software.amazon.awscdk.services.s3.deployment.BucketDeployment;
 import software.amazon.awscdk.services.s3.deployment.Source;
+import software.amazon.awscdk.services.ssm.StringParameter;
 import software.constructs.Construct;
 
 import java.util.List;
@@ -42,14 +43,19 @@ public class DataConstruct extends Construct {
                 .timeToLiveAttribute("TTL")
                 .build();
 
-        this.airportsBucket = Bucket.Builder.create(this, Utils.getResourceName(AEROTRACK_BUCKET))
+        StringParameter.Builder.create(this, "FlightsTableNameParameter")
+                .parameterName(FLIGHTS_TABLE)
+                .stringValue(flightsTable.getTableName())
+                .build();
+
+        this.airportsBucket = Bucket.Builder.create(this, InfraUtils.getResourceName(AEROTRACK_BUCKET))
                 .objectOwnership(ObjectOwnership.BUCKET_OWNER_ENFORCED)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
                 .encryption(BucketEncryption.S3_MANAGED)
                 .versioned(true)
                 .build();
 
-        BucketDeployment.Builder.create(this, Utils.getResourceName(AIRPORTS_DEPLOYMENT))
+        BucketDeployment.Builder.create(this, InfraUtils.getResourceName(AIRPORTS_DEPLOYMENT))
                 .sources(List.of(Source.asset("src/main/java/com/aerotrack/infrastructure/s3data/")))
                 .destinationBucket(this.airportsBucket)
                 .build();

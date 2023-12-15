@@ -12,7 +12,7 @@ import java.util.Map;
 import static java.util.Collections.singletonList;
 import static software.amazon.awscdk.BundlingOutput.ARCHIVED;
 
-public class Utils {
+public class InfraUtils {
     public static BundlingOptions.Builder getLambdaBuilderOptions() {
         Map<String, String> environmentVariables = new HashMap<>();
         environmentVariables.put("GITHUB_TOKEN", System.getenv("GITHUB_TOKEN")); // Retrieve the token from an environment variable

@@ -1,6 +1,6 @@
 package com.aerotrack.infrastructure.constructs;
 
-import com.aerotrack.common.Utils;
+import com.aerotrack.common.InfraUtils;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.Duration;
 import software.amazon.awscdk.services.cloudwatch.Dashboard;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.aerotrack.common.Constants;
-import static com.aerotrack.common.Utils.isPersonalDeployment;
+import static com.aerotrack.common.InfraUtils.isPersonalDeployment;
 
 
 public class RefreshConstruct extends Construct {
@@ -62,7 +62,7 @@ public class RefreshConstruct extends Construct {
 
         if(!isPersonalDeployment())
         {
-            Rule rule = Rule.Builder.create(this, Utils.getResourceName(Constants.FLIGHTS_REFRESH_EVENT_RULE))
+            Rule rule = Rule.Builder.create(this, InfraUtils.getResourceName(Constants.FLIGHTS_REFRESH_EVENT_RULE))
                     .schedule(Schedule.rate(Duration.minutes(Constants.FLIGHTS_REFRESH_EVENT_RATE_MINUTES)))
                     .build();
 
@@ -70,7 +70,7 @@ public class RefreshConstruct extends Construct {
                 rule.addTarget(new LambdaFunction(flightsRefreshLambda));
             }
 
-            Rule.Builder.create(this, Utils.getResourceName(Constants.AIRPORTS_REFRESH_EVENT_RULE))
+            Rule.Builder.create(this, InfraUtils.getResourceName(Constants.AIRPORTS_REFRESH_EVENT_RULE))
                     .schedule(Schedule.rate(Duration.minutes(Constants.AIRPORTS_REFRESH_EVENT_RATE_MINUTES)))
                     .targets(List.of(new LambdaFunction(airportsRefreshLambda)))
                     .build();
@@ -91,13 +91,14 @@ public class RefreshConstruct extends Construct {
             dashboard.addWidgets(new GraphWidget(GraphWidgetProps.builder()
                     .title("Ryanair API Calls")
                     .left(List.of(apiCallMetric))
-                    .width(10)
+                    .width(20)
+                    .height(10)
                     .build()));
         }
     }
 
     private Function createRefreshLambda(String lambdaName, String roleName, HashMap<String, String> env) {
-        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(roleName))
+        Role lambdaRole = Role.Builder.create(this, InfraUtils.getResourceName(roleName))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(List.of(
                         ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
@@ -106,11 +107,11 @@ public class RefreshConstruct extends Construct {
                 .build();
 
         // Define the Lambda function
-        return Function.Builder.create(this, Utils.getResourceName(lambdaName))
+        return Function.Builder.create(this, InfraUtils.getResourceName(lambdaName))
                 .runtime(Runtime.JAVA_17)
                 .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
-                        .bundling(Utils.getLambdaBuilderOptions()
-                                .command(Utils.getLambdaPackagingInstructions(lambdaName))
+                        .bundling(InfraUtils.getLambdaBuilderOptions()
+                                .command(InfraUtils.getLambdaPackagingInstructions(lambdaName))
                                 .build())
                         .build()))
                 .environment(env)
@@ -118,7 +119,7 @@ public class RefreshConstruct extends Construct {
                 .timeout(Duration.minutes(5))
                 .memorySize(256)
                 .logRetention(RetentionDays.ONE_DAY)
-                .handler(Utils.getLambdaRequestHandler(lambdaName))
+                .handler(InfraUtils.getLambdaRequestHandler(lambdaName))
                 .build();
 
 

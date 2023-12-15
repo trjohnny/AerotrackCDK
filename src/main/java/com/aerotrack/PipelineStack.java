@@ -14,6 +14,7 @@ import software.amazon.awscdk.StackProps;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.aerotrack.common.Constants.FLIGHTS_TABLE;
 import static com.aerotrack.common.Constants.GITHUB_USERNAME;
 
 
@@ -75,6 +76,7 @@ public class PipelineStack extends Stack {
         ShellStep integrationTestStep = ShellStep.Builder.create("IntegrationTests")
                 .commands(Arrays.asList(
                         createMavenSettings(),
+                        String.format("export FLIGHTS_TABLE=$(aws ssm get-parameter --name \"%s\" --query \"Parameter.Value\" --output text)", FLIGHTS_TABLE),
                         "mvn verify"
                 ))
                 .build();

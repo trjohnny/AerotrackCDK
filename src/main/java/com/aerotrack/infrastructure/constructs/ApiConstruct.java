@@ -1,6 +1,6 @@
 package com.aerotrack.infrastructure.constructs;
 
-import com.aerotrack.common.Utils;
+import com.aerotrack.common.InfraUtils;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.Duration;
 import software.amazon.awscdk.services.apigateway.ApiKey;
@@ -39,7 +39,7 @@ public class ApiConstruct extends Construct {
     public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket airportsBucket, Table flightsTable) {
         super(scope, id);
 
-        Role lambdaRole = Role.Builder.create(this, Utils.getResourceName(Constants.QUERY_LAMBDA_ROLE))
+        Role lambdaRole = Role.Builder.create(this, InfraUtils.getResourceName(Constants.QUERY_LAMBDA_ROLE))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(List.of(
                         ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
@@ -49,7 +49,7 @@ public class ApiConstruct extends Construct {
         airportsBucket.grantRead(lambdaRole);
         flightsTable.grantReadData(lambdaRole);
 
-        RestApi queryRestApi = RestApi.Builder.create(this, Utils.getResourceName(Constants.REST_API_GATEWAY))
+        RestApi queryRestApi = RestApi.Builder.create(this, InfraUtils.getResourceName(Constants.REST_API_GATEWAY))
                 .defaultCorsPreflightOptions(CorsOptions.builder()
                         .allowOrigins(Cors.ALL_ORIGINS)
                         .allowMethods(Cors.ALL_METHODS)
@@ -58,7 +58,7 @@ public class ApiConstruct extends Construct {
 
         ApiKey key = ApiKey.Builder.create(this, Constants.API_KEY).build();
 
-        UsagePlan usagePlan = UsagePlan.Builder.create(this, Utils.getResourceName(Constants.USAGE_PLAN))
+        UsagePlan usagePlan = UsagePlan.Builder.create(this, InfraUtils.getResourceName(Constants.USAGE_PLAN))
                 .throttle(ThrottleSettings.builder()
                         .burstLimit(Constants.API_BURST_LIMIT)
                         .rateLimit(Constants.API_RATE_LIMIT)
@@ -71,11 +71,11 @@ public class ApiConstruct extends Construct {
 
         usagePlan.addApiKey(key);
 
-        Function queryFunction = new Function(this, Utils.getResourceName(Constants.QUERY_LAMBDA), FunctionProps.builder()
+        Function queryFunction = new Function(this, InfraUtils.getResourceName(Constants.QUERY_LAMBDA), FunctionProps.builder()
                 .runtime(Runtime.JAVA_17)
                 .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
-                        .bundling(Utils.getLambdaBuilderOptions()
-                                .command(Utils.getLambdaPackagingInstructions(Constants.QUERY_LAMBDA))
+                        .bundling(InfraUtils.getLambdaBuilderOptions()
+                                .command(InfraUtils.getLambdaPackagingInstructions(Constants.QUERY_LAMBDA))
                                 .build())
                         .build()))
                 .environment(new HashMap<>() {

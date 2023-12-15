@@ -102,6 +102,13 @@
             <version>1.2.3</version>
         </dependency>
 
+        <!-- AWS SDK for STS -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sts</artifactId>
+            <version>2.21.44</version> <!-- Replace with the latest version -->
+        </dependency>
+
         <dependency>
             <groupId>software.amazon.awsconstructs</groupId>
             <artifactId>eventbridgelambda</artifactId>
@@ -131,13 +138,13 @@
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-model</artifactId>
-            <version>1.2.3</version>
+            <version>1.2.7</version>
         </dependency>
 
         <dependency>
             <groupId>com.aerotrack</groupId>
             <artifactId>aerotrack-utils</artifactId>
-            <version>1.1.7</version>
+            <version>1.1.8</version>
         </dependency>
     </dependencies>
 </project>
