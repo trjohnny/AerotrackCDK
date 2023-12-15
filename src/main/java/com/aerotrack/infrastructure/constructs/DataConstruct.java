@@ -43,7 +43,7 @@ public class DataConstruct extends Construct {
                 .timeToLiveAttribute("TTL")
                 .build();
 
-        StringParameter.Builder.create(this, "FlightsTableNameParameter")
+        StringParameter.Builder.create(this, InfraUtils.getResourceName("FlightsTableNameParameter"))
                 .parameterName(FLIGHTS_TABLE)
                 .stringValue(flightsTable.getTableName())
                 .build();
