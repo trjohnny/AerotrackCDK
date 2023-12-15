@@ -76,10 +76,16 @@ public class PipelineStack extends Stack {
         ShellStep integrationTestStep = ShellStep.Builder.create("IntegrationTests")
                 .commands(Arrays.asList(
                         createMavenSettings(),
+                        "export ASSUME_ROLE_ARN=arn:aws:iam::073873382417:role/BuildParametersRole",
+                        "export TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name cross-account-session)",
+                        "export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r .Credentials.AccessKeyId)",
+                        "export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r .Credentials.SecretAccessKey)",
+                        "export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r .Credentials.SessionToken)",
                         String.format("export FLIGHTS_TABLE=$(aws ssm get-parameter --name \"%s\" --query \"Parameter.Value\" --output text)", FLIGHTS_TABLE),
                         "mvn verify"
                 ))
                 .build();
+
 
         // Add integration tests as post-deployment steps for Alpha stage
         alphaStage.addPost(integrationTestStep);
