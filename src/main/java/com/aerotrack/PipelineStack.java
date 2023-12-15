@@ -77,11 +77,12 @@ public class PipelineStack extends Stack {
                 .commands(Arrays.asList(
                         createMavenSettings(),
                         "export ASSUME_ROLE_ARN=arn:aws:iam::073873382417:role/BuildParametersRole",
-                        "TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name cross-account-session)",
-                        "export TEMP_AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r .Credentials.AccessKeyId)",
-                        "export TEMP_AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r .Credentials.SecretAccessKey)",
-                        "export TEMP_AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r .Credentials.SessionToken)",
-                        "AWS_ACCESS_KEY_ID=$TEMP_AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$TEMP_AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$TEMP_AWS_SESSION_TOKEN export FLIGHTS_TABLE=$(aws ssm get-parameter --name \"" + FLIGHTS_TABLE + "\" --query \"Parameter.Value\" --output text)",
+                        "export TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name cross-account-session)",
+                        "export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r .Credentials.AccessKeyId)",
+                        "export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r .Credentials.SecretAccessKey)",
+                        "export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r .Credentials.SessionToken)",
+                        String.format("export FLIGHTS_TABLE=$(aws ssm get-parameter --name \"%s\" --query \"Parameter.Value\" --output text)", FLIGHTS_TABLE),
+                        "unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN",
                         "mvn verify"
                 ))
                 .build();
