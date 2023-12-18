@@ -30,7 +30,7 @@ public class AirportsRefreshWorkflow  {
         LHR, CDG, FRA, AMS, MAD, BCN, FCO, MUC, LGW, IST,
         CPH, SVO, DME, ORY, ARN, ZRH, VIE, MAN, ATH, LIS,
         OSL, HEL, DUB, BRU, TXL, MXP, GVA, PRG, WAW, DUS,
-        BUD, OTP, MLA, STR, TSF, TRS, HAM, VCE,
+        BUD, OTP, MLA, STR, TSF, TRS, HAM, VCE, EIN, STN,
         VLC, NCE, BLQ, NAP, BHX, GLA, LBA, EDI, BRS, SEN
     }
 
