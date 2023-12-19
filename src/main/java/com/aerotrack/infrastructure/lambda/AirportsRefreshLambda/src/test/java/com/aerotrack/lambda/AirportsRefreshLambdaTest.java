@@ -2,7 +2,7 @@ package com.aerotrack.lambda;
 
 import com.aerotrack.lambda.workflow.AirportsRefreshWorkflow;
 import com.aerotrack.model.entities.Airport;
-import com.aerotrack.utils.clients.ryanair.RyanairClient;
+import com.aerotrack.utils.clients.api.RyanairApiClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -21,7 +21,7 @@ class AirportsRefreshLambdaTest {
 
     private AirportsRefreshWorkflow workflow;
     @Mock
-    private RyanairClient ryanairClient;
+    private RyanairApiClient ryanairClient;
 
     @BeforeEach
     void setUp() throws IOException {

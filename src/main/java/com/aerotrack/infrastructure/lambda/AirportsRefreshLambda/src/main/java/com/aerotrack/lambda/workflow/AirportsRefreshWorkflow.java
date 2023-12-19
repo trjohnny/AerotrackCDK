@@ -2,7 +2,7 @@ package com.aerotrack.lambda.workflow;
 
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.AirportsJsonFile;
-import com.aerotrack.utils.clients.ryanair.RyanairClient;
+import com.aerotrack.utils.clients.api.RyanairApiClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,19 +35,24 @@ public class AirportsRefreshWorkflow  {
     }
 
     private final AerotrackS3Client s3Client;
-    private final RyanairClient ryanairClient;
+    private final RyanairApiClient ryanairClient;
 
-    public static AirportsRefreshWorkflow create() {
-        return new AirportsRefreshWorkflow(AerotrackS3Client.create(), RyanairClient.create());
-    }
     public void refreshFlights() throws IOException {
-
         // Get a random airport using the Ryanair API
         List<Airport> airportList = filterSelectedAirports(ryanairClient.getAvailableAirports());
         List<Airport> currentAirports = getAvailableAirports().getAirports();
         Airport chosenAirport = chooseAirport(currentAirports, airportList);
-        AirportsJsonFile file = AirportsJsonFile.builder().airports(updateAirports(currentAirports, chosenAirport)).build();
-        s3Client.putJsonObjectToS3(AIRPORTS_OBJECT_NAME, new JSONObject(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(file)));
+
+        AirportsJsonFile file = AirportsJsonFile.builder()
+                .airports(updateAirports(currentAirports, chosenAirport))
+                .build();
+
+        String stringObject = new ObjectMapper()
+                .writer()
+                .withDefaultPrettyPrinter()
+                .writeValueAsString(file);
+
+        s3Client.putJsonObjectToS3(AIRPORTS_OBJECT_NAME, new JSONObject(stringObject));
     }
 
     public Airport chooseAirport(List<Airport> savedAirports, List<Airport> allAirports) {
