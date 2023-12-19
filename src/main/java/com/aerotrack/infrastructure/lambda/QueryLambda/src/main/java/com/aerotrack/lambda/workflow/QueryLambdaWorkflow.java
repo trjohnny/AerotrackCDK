@@ -13,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -133,10 +135,10 @@ public class QueryLambdaWorkflow {
     private int calculateDuration(Flight outboundFlight, Flight returnFlight) {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
-        LocalDateTime departureDateTime = LocalDateTime.parse(outboundFlight.getDepartureDateTime(), formatter);
-        LocalDateTime returnDateTime = LocalDateTime.parse(returnFlight.getDepartureDateTime(), formatter);
+        LocalDate departureDate = LocalDate.parse(outboundFlight.getDepartureDateTime(), formatter);
+        LocalDate returnDate = LocalDate.parse(returnFlight.getDepartureDateTime(), formatter);
 
-        Duration duration = Duration.between(departureDateTime, returnDateTime);
-        return (int) duration.toDays();
+        return Period.between(departureDate, returnDate).getDays();
     }
+
 }

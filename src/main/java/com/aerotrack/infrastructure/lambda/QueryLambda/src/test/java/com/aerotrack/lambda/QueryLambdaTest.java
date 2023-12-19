@@ -74,16 +74,16 @@ class QueryLambdaTest {
 
     private List<Flight> getGenericFirstFlights() {
         return List.of(
+                new Flight("TSF", "VIE", "2021-01-08T04:58:02.000", "2021-01-08T05:58:02.000", "RY123",115),
                 new Flight("TSF", "VIE", "2021-01-01T06:20:43.000", "2021-01-01T07:20:43.000", "RY123", 125),
-                new Flight("TSF", "VIE", "2021-01-03T09:48:17.000", "2021-01-03T10:48:17.000", "RY123",112),
-                new Flight("TSF", "VIE", "2021-01-08T04:58:02.000", "2021-01-08T05:58:02.000", "RY123",115));
+                new Flight("TSF", "VIE", "2021-01-03T09:48:17.000", "2021-01-03T10:48:17.000", "RY123",112));
     }
 
     private List<Flight> getGenericSecondFlights() {
         return List.of(
                 new Flight("VIE", "TSF", "2021-01-03T16:30:41.000", "2021-01-03T17:30:41.000", "RY123",77),
-                new Flight("VIE", "TSF", "2021-01-09T18:46:33.000", "2021-01-09T19:46:33.000", "RY123",73),
-                new Flight("VIE", "TSF", "2021-01-06T10:16:07.000", "2021-01-06T11:16:07.000", "RY123",89));
+                new Flight("VIE", "TSF", "2021-01-06T10:16:07.000", "2021-01-06T11:16:07.000", "RY123",89),
+                new Flight("VIE", "TSF", "2021-01-09T18:46:33.000", "2021-01-09T19:46:33.000", "RY123",73));
     }
 
     @Test
@@ -99,7 +99,7 @@ class QueryLambdaTest {
         List<Trip> pairs = results.getTrips();
 
         assertFalse(pairs.isEmpty());
-        assertEquals(3, pairs.size());
+        assertEquals(4, pairs.size());
     }
 
     @Test
