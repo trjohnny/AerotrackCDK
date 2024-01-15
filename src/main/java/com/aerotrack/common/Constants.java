@@ -3,6 +3,7 @@ package com.aerotrack.common;
 public class Constants {
     public static final String QUERY_LAMBDA = "QueryLambda";
     public static final String FLIGHTS_REFRESH_LAMBDA = "FlightsRefreshLambda";
+    public static final String FETCH_AIRPORTS_LAMBDA = "FetchAirportsLambda";
     public static final String FLIGHTS_REFRESH_LAMBDA_ROLE = "FlightsRefreshLambdaRole";
     public static final String AIRPORTS_REFRESH_LAMBDA = "AirportsRefreshLambda";
     public static final String AIRPORTS_REFRESH_LAMBDA_ROLE = "AirportsRefreshLambdaRole";
@@ -22,7 +23,6 @@ public class Constants {
     public static final String API_CONSTRUCT = "ApiConstruct";
     public static final String DATA_CONSTRUCT = "DataConstruct";
     public static final String GITHUB_USERNAME = "trjohnny";
-
     public static final String FLIGHT_TABLE_ENV_VAR = "FLIGHT_TABLE";
     public static final String AIRPORTS_BUCKET_ENV_VAR = "AIRPORTS_BUCKET";
     public static final Integer QUERY_LAMBDA_MEMORY_SIZE_MB = 2048;

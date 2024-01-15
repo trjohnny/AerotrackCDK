@@ -32,7 +32,7 @@ import java.util.List;
 import com.aerotrack.common.Constants;
 
 
-public class ApiConstruct extends Construct {
+public class  ApiConstruct extends Construct {
 
     private static final String SCAN_RESOURCE = "scan";
 
@@ -91,13 +91,38 @@ public class ApiConstruct extends Construct {
                 .logRetention(RetentionDays.ONE_DAY)
                 .build());
 
-        LambdaIntegration lambdaIntegration = new LambdaIntegration(queryFunction);
-
         Resource queryResource = queryRestApi.getRoot().addResource(SCAN_RESOURCE);
 
-        // Add a method (e.g., GET) to the resource that is integrated with the Lambda function
-        queryResource.addMethod("POST", lambdaIntegration, MethodOptions.builder()
+        queryResource.addMethod("POST", new LambdaIntegration(queryFunction), MethodOptions.builder()
                 .apiKeyRequired(true)
                 .build());
+
+
+        Function fetchAirportsFunction = new Function(this, InfraUtils.getResourceName(Constants.FETCH_AIRPORTS_LAMBDA), FunctionProps.builder()
+                .runtime(Runtime.JAVA_17)
+                .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
+                        .bundling(InfraUtils.getLambdaBuilderOptions()
+                                .command(InfraUtils.getLambdaPackagingInstructions(Constants.FETCH_AIRPORTS_LAMBDA)) //
+                                .build())
+                        .build()))
+                .environment(new HashMap<>() {
+                    {
+                        put(Constants.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
+                    }
+                })
+                .handler("com.aerotrack.lambda.FetchAirportsRequestHandler::handleRequest")
+                .role(lambdaRole)
+                .memorySize(2048)
+                .timeout(Duration.seconds(30))
+                .logRetention(RetentionDays.ONE_DAY)
+                .build());
+
+        Resource getAirportsResource = queryRestApi.getRoot().addResource("airports");
+
+        getAirportsResource.addMethod("GET", new LambdaIntegration(fetchAirportsFunction), MethodOptions.builder()
+                .apiKeyRequired(true)
+                .build());
+
     }
 }
+
