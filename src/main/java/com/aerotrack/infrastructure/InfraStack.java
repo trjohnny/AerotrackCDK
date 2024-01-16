@@ -7,9 +7,6 @@ import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 import software.constructs.Construct;
 
-import static com.aerotrack.common.Constants.API_CONSTRUCT;
-import static com.aerotrack.common.Constants.DATA_CONSTRUCT;
-import static com.aerotrack.common.Constants.REFRESH_CONSTRUCT;
 public class InfraStack extends Stack {
     public InfraStack(final Construct scope, final String id) {
         this(scope, id, null);
@@ -19,11 +16,11 @@ public class InfraStack extends Stack {
         super(scope, id, props);
 
 
-        DataConstruct data = new DataConstruct(this, DATA_CONSTRUCT);
+        DataConstruct data = new DataConstruct(this, "DataConstruct");
 
-        new ApiConstruct(this, API_CONSTRUCT, data.getAirportsBucket(), data.getFlightsTable());
+        new ApiConstruct(this, "ApiConstruct", data.getAirportsBucket(), data.getFlightsTable());
 
-        new RefreshConstruct(this, REFRESH_CONSTRUCT, data.getAirportsBucket(), data.getFlightsTable());
+        new RefreshConstruct(this, "RefreshConstruct", data.getAirportsBucket(), data.getFlightsTable());
     }
 
 }

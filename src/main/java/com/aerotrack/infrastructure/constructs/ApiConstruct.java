@@ -28,6 +28,8 @@ import software.constructs.Construct;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import com.aerotrack.common.Constants;
 
@@ -35,33 +37,25 @@ import com.aerotrack.common.Constants;
 public class  ApiConstruct extends Construct {
 
     private static final String SCAN_RESOURCE = "scan";
+    private static final Integer API_DEFAULT_MEMORY_SIZE = 2048;
+    private static final Integer API_DEFAULT_TIMEOUT_SECONDS = 30;
 
     public ApiConstruct(@NotNull Construct scope, @NotNull String id, Bucket airportsBucket, Table flightsTable) {
         super(scope, id);
 
-        Role lambdaRole = Role.Builder.create(this, InfraUtils.getResourceName(Constants.QUERY_LAMBDA_ROLE))
-                .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
-                .managedPolicies(List.of(
-                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
-                ))
-                .build();
-
-        airportsBucket.grantRead(lambdaRole);
-        flightsTable.grantReadData(lambdaRole);
-
-        RestApi queryRestApi = RestApi.Builder.create(this, InfraUtils.getResourceName(Constants.REST_API_GATEWAY))
+        RestApi queryRestApi = RestApi.Builder.create(this, InfraUtils.getResourceName("RestApiGateway"))
                 .defaultCorsPreflightOptions(CorsOptions.builder()
                         .allowOrigins(Cors.ALL_ORIGINS)
                         .allowMethods(Cors.ALL_METHODS)
                         .build())
                 .build();
 
-        ApiKey key = ApiKey.Builder.create(this, Constants.API_KEY).build();
+        ApiKey key = ApiKey.Builder.create(this, "ApiKey").build();
 
-        UsagePlan usagePlan = UsagePlan.Builder.create(this, InfraUtils.getResourceName(Constants.USAGE_PLAN))
+        UsagePlan usagePlan = UsagePlan.Builder.create(this, InfraUtils.getResourceName("UsagePlan"))
                 .throttle(ThrottleSettings.builder()
-                        .burstLimit(Constants.API_BURST_LIMIT)
-                        .rateLimit(Constants.API_RATE_LIMIT)
+                        .burstLimit(5)
+                        .rateLimit(5)
                         .build())
                 .build();
 
@@ -71,25 +65,16 @@ public class  ApiConstruct extends Construct {
 
         usagePlan.addApiKey(key);
 
-        Function queryFunction = new Function(this, InfraUtils.getResourceName(Constants.QUERY_LAMBDA), FunctionProps.builder()
-                .runtime(Runtime.JAVA_17)
-                .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
-                        .bundling(InfraUtils.getLambdaBuilderOptions()
-                                .command(InfraUtils.getLambdaPackagingInstructions(Constants.QUERY_LAMBDA))
-                                .build())
-                        .build()))
-                .environment(new HashMap<>() {
+        Function queryFunction = getApiLambda(Constants.QUERY_LAMBDA,
+                new HashMap<>() {
                     {
                         put(Constants.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
                         put(Constants.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
-                })
-                .handler("com.aerotrack.lambda.QueryRequestHandler::handleRequest")
-                .role(lambdaRole)
-                .memorySize(Constants.QUERY_LAMBDA_MEMORY_SIZE_MB)
-                .timeout(Duration.seconds(Constants.QUERY_LAMBDA_TIMEOUT_SECONDS))
-                .logRetention(RetentionDays.ONE_DAY)
-                .build());
+                });
+
+        airportsBucket.grantRead(Objects.requireNonNull(queryFunction.getRole()));
+        flightsTable.grantReadData(Objects.requireNonNull(queryFunction.getRole()));
 
         Resource queryResource = queryRestApi.getRoot().addResource(SCAN_RESOURCE);
 
@@ -98,24 +83,14 @@ public class  ApiConstruct extends Construct {
                 .build());
 
 
-        Function fetchAirportsFunction = new Function(this, InfraUtils.getResourceName(Constants.FETCH_AIRPORTS_LAMBDA), FunctionProps.builder()
-                .runtime(Runtime.JAVA_17)
-                .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
-                        .bundling(InfraUtils.getLambdaBuilderOptions()
-                                .command(InfraUtils.getLambdaPackagingInstructions(Constants.FETCH_AIRPORTS_LAMBDA)) //
-                                .build())
-                        .build()))
-                .environment(new HashMap<>() {
+        Function fetchAirportsFunction = getApiLambda(Constants.FETCH_AIRPORTS_LAMBDA,
+                new HashMap<>() {
                     {
                         put(Constants.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
                     }
-                })
-                .handler("com.aerotrack.lambda.FetchAirportsRequestHandler::handleRequest")
-                .role(lambdaRole)
-                .memorySize(2048)
-                .timeout(Duration.seconds(30))
-                .logRetention(RetentionDays.ONE_DAY)
-                .build());
+                });
+
+        airportsBucket.grantRead(Objects.requireNonNull(fetchAirportsFunction.getRole()));
 
         Resource getAirportsResource = queryRestApi.getRoot().addResource("airports");
 
@@ -123,6 +98,30 @@ public class  ApiConstruct extends Construct {
                 .apiKeyRequired(true)
                 .build());
 
+    }
+
+    private Function getApiLambda(String functionName, Map<String, String> env) {
+        Role lambdaRole = Role.Builder.create(this, String.format("%sRole", InfraUtils.getResourceName(functionName)))
+                .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
+                .managedPolicies(List.of(
+                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+                ))
+                .build();
+
+        return new Function(this, InfraUtils.getResourceName(functionName), FunctionProps.builder()
+                .runtime(Runtime.JAVA_17)
+                .code(Code.fromAsset("src/main/java/com/aerotrack/infrastructure/lambda", AssetOptions.builder()
+                        .bundling(InfraUtils.getLambdaBuilderOptions()
+                                .command(InfraUtils.getLambdaPackagingInstructions(functionName))
+                                .build())
+                        .build()))
+                .environment(env)
+                .handler(InfraUtils.getLambdaRequestHandler(functionName))
+                .role(lambdaRole)
+                .memorySize(API_DEFAULT_MEMORY_SIZE)
+                .timeout(Duration.seconds(API_DEFAULT_TIMEOUT_SECONDS))
+                .logRetention(RetentionDays.ONE_DAY)
+                .build());
     }
 }
 

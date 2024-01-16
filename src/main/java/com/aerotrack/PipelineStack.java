@@ -1,5 +1,6 @@
 package com.aerotrack;
 
+import com.aerotrack.common.Constants;
 import com.aerotrack.infrastructure.AppStage;
 import software.amazon.awscdk.Environment;
 import software.amazon.awscdk.pipelines.*;
@@ -14,9 +15,6 @@ import software.amazon.awscdk.StackProps;
 import java.util.Arrays;
 import java.util.Map;
 
-import static com.aerotrack.common.Constants.FLIGHTS_TABLE;
-import static com.aerotrack.common.Constants.GITHUB_USERNAME;
-
 
 public class PipelineStack extends Stack {
 
@@ -29,7 +27,7 @@ public class PipelineStack extends Stack {
                             "<servers>" +
                                 "<server>" +
                                     "<id>github</id>" +
-                                    String.format("<username>%s</username>", GITHUB_USERNAME) +
+                                    String.format("<username>%s</username>", Constants.GITHUB_USERNAME) +
                                     "<password>${GITHUB_TOKEN}</password>" +
                                 "</server>" +
                             "</servers>" +

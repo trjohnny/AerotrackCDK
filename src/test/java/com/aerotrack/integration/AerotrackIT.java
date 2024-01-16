@@ -74,7 +74,7 @@ public class AerotrackIT {
         String roleArn = "arn:aws:iam::073873382417:role/BuildParametersRole";
         Region region = Region.EU_WEST_1;
 
-        String flightsTableName = CrossAccountParameterFetcher.fetchParameter(roleArn, InfraUtils.getResourceName(Constants.FLIGHTS_TABLE), region);
+        String flightsTableName = CrossAccountParameterFetcher.fetchParameter(roleArn, InfraUtils.getResourceName("FlightsTable"), region);
 
         flightsTable = enhancedClient.table(flightsTableName, TableSchema.fromBean(Flight.class));
         // Insert test data

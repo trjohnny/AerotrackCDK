@@ -18,9 +18,6 @@ import software.constructs.Construct;
 
 import java.util.List;
 
-import static com.aerotrack.common.Constants.AEROTRACK_BUCKET;
-import static com.aerotrack.common.Constants.AIRPORTS_DEPLOYMENT;
-import static com.aerotrack.common.Constants.FLIGHTS_TABLE;
 
 @Getter
 public class DataConstruct extends Construct {
@@ -29,7 +26,7 @@ public class DataConstruct extends Construct {
     public DataConstruct(@NotNull Construct scope, @NotNull String id) {
         super(scope, id);
 
-        this.flightsTable = Table.Builder.create(this, FLIGHTS_TABLE)
+        this.flightsTable = Table.Builder.create(this, "FlightsTable")
                 .partitionKey(Attribute.builder()
                         .name("direction")
                         .type(AttributeType.STRING)
@@ -44,18 +41,18 @@ public class DataConstruct extends Construct {
                 .build();
 
         StringParameter.Builder.create(this, InfraUtils.getResourceName("FlightsTableNameParameter"))
-                .parameterName(InfraUtils.getResourceName(FLIGHTS_TABLE))
+                .parameterName(InfraUtils.getResourceName("FlightsTable"))
                 .stringValue(flightsTable.getTableName())
                 .build();
 
-        this.airportsBucket = Bucket.Builder.create(this, InfraUtils.getResourceName(AEROTRACK_BUCKET))
+        this.airportsBucket = Bucket.Builder.create(this, InfraUtils.getResourceName("AerotrackBucket"))
                 .objectOwnership(ObjectOwnership.BUCKET_OWNER_ENFORCED)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
                 .encryption(BucketEncryption.S3_MANAGED)
                 .versioned(true)
                 .build();
 
-        BucketDeployment.Builder.create(this, InfraUtils.getResourceName(AIRPORTS_DEPLOYMENT))
+        BucketDeployment.Builder.create(this, InfraUtils.getResourceName("AirportsDeployment"))
                 .sources(List.of(Source.asset("src/main/java/com/aerotrack/infrastructure/s3data/")))
                 .destinationBucket(this.airportsBucket)
                 .build();

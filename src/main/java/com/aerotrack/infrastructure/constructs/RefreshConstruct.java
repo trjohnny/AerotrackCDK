@@ -34,12 +34,16 @@ import static com.aerotrack.common.InfraUtils.isPersonalDeployment;
 public class RefreshConstruct extends Construct {
 
 
+    private static final Integer AIRPORTS_REFRESH_EVENT_RATE_HOURS = 24;
+    private static final Integer FLIGHTS_REFRESH_EVENT_RATE_MINUTES = 9;
+    private static final Integer FLIGHTS_REFRESH_LAMBDAS_PER_EVENT = 5;
+
     public RefreshConstruct(@NotNull Construct scope, @NotNull String id, Bucket airportsBucket, Table flightsTable) {
         super(scope, id);
 
 
-        Function flightsRefreshLambda = createRefreshLambda(Constants.FLIGHTS_REFRESH_LAMBDA,
-                Constants.FLIGHTS_REFRESH_LAMBDA_ROLE,
+        Function flightsRefreshLambda = getRefreshLambda(Constants.FLIGHTS_REFRESH_LAMBDA,
+                "FlightsRefreshLambdaRole",
                 new HashMap<>() {
                     {
                         put(Constants.FLIGHT_TABLE_ENV_VAR, flightsTable.getTableName());
@@ -50,8 +54,8 @@ public class RefreshConstruct extends Construct {
         airportsBucket.grantRead(Objects.requireNonNull(flightsRefreshLambda.getRole()));
         flightsTable.grantWriteData(Objects.requireNonNull(flightsRefreshLambda.getRole()));
 
-        Function airportsRefreshLambda = createRefreshLambda(Constants.AIRPORTS_REFRESH_LAMBDA,
-                Constants.AIRPORTS_REFRESH_LAMBDA_ROLE,
+        Function airportsRefreshLambda = getRefreshLambda(Constants.AIRPORTS_REFRESH_LAMBDA,
+                "AirportsRefreshLambdaRole",
                 new HashMap<>() {
                     {
                         put(Constants.AIRPORTS_BUCKET_ENV_VAR, airportsBucket.getBucketName());
@@ -62,16 +66,16 @@ public class RefreshConstruct extends Construct {
 
         if(!isPersonalDeployment())
         {
-            Rule rule = Rule.Builder.create(this, InfraUtils.getResourceName(Constants.FLIGHTS_REFRESH_EVENT_RULE))
-                    .schedule(Schedule.rate(Duration.minutes(Constants.FLIGHTS_REFRESH_EVENT_RATE_MINUTES)))
+            Rule rule = Rule.Builder.create(this, InfraUtils.getResourceName("FlightsRefreshEvent"))
+                    .schedule(Schedule.rate(Duration.minutes(FLIGHTS_REFRESH_EVENT_RATE_MINUTES)))
                     .build();
 
-            for (int i = 0; i < Constants.FLIGHTS_REFRESH_LAMBDAS_PER_EVENT; i++) {
+            for (int i = 0; i < FLIGHTS_REFRESH_LAMBDAS_PER_EVENT; i++) {
                 rule.addTarget(new LambdaFunction(flightsRefreshLambda));
             }
 
-            Rule.Builder.create(this, InfraUtils.getResourceName(Constants.AIRPORTS_REFRESH_EVENT_RULE))
-                    .schedule(Schedule.rate(Duration.minutes(Constants.AIRPORTS_REFRESH_EVENT_RATE_MINUTES)))
+            Rule.Builder.create(this, InfraUtils.getResourceName("AirportsRefreshEvent"))
+                    .schedule(Schedule.rate(Duration.hours(AIRPORTS_REFRESH_EVENT_RATE_HOURS)))
                     .targets(List.of(new LambdaFunction(airportsRefreshLambda)))
                     .build();
 
@@ -97,12 +101,11 @@ public class RefreshConstruct extends Construct {
         }
     }
 
-    private Function createRefreshLambda(String lambdaName, String roleName, HashMap<String, String> env) {
+    private Function getRefreshLambda(String lambdaName, String roleName, HashMap<String, String> env) {
         Role lambdaRole = Role.Builder.create(this, InfraUtils.getResourceName(roleName))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(List.of(
-                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
-                        ManagedPolicy.fromAwsManagedPolicyName("CloudWatchFullAccess")
+                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
                 ))
                 .build();
 
@@ -124,6 +127,5 @@ public class RefreshConstruct extends Construct {
 
 
     }
-
 
 }

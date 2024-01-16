@@ -34,6 +34,8 @@ public class InfraUtils {
         return switch (lambdaName) {
             case Constants.FLIGHTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.FlightRefreshRequestHandler::handleRequest";
             case Constants.AIRPORTS_REFRESH_LAMBDA -> "com.aerotrack.lambda.AirportsRefreshRequestHandler::handleRequest";
+            case Constants.FETCH_AIRPORTS_LAMBDA -> "com.aerotrack.lambda.FetchAirportsRequestHandler::handleRequest";
+            case Constants.QUERY_LAMBDA -> "com.aerotrack.lambda.QueryRequestHandler::handleRequest";
             default -> throw new IllegalStateException("Unexpected value: " + lambdaName);
         };
     }
