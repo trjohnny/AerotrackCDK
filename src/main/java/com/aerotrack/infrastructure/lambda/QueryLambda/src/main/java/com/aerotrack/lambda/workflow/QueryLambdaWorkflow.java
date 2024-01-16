@@ -12,9 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -29,7 +27,7 @@ import java.util.Set;
 
 @Slf4j
 public class QueryLambdaWorkflow {
-    private static final long TRIPS_RETURN_LIMIT = 10000;
+    private static final long TRIPS_RETURN_LIMIT = 10000; // No problems up to 1M, theoretically
     private final AerotrackDynamoDbClient dynamoDbClient;
     private final AerotrackS3Client s3Client;
     private final ObjectMapper objectMapper;

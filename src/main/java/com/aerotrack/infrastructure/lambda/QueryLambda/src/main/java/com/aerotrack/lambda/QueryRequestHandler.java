@@ -31,7 +31,7 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
 
         try {
             ScanQueryRequest scanQueryRequest = objectMapper.readValue(request.getBody(), ScanQueryRequest.class);
-            scanQueryRequest.validate(); // Validate the request
+            scanQueryRequest.validate();
             log.info("QueryRequestHandler started with request [{}]", scanQueryRequest);
 
             Integer minDays = scanQueryRequest.getMinDays();
@@ -45,6 +45,7 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
 
             Integer maxChanges = Optional.ofNullable(scanQueryRequest.getMaxChanges()).orElse(0);
 
+            // This will be used when flight connections will be implemented
             Optional<Integer> minTimeBetweenChangesHours = Optional.ofNullable(scanQueryRequest.getMinTimeBetweenChangesHours());
             Optional<Integer> maxTimeBetweenChangesHours = Optional.ofNullable(scanQueryRequest.getMaxTimeBetweenChangesHours());
 
@@ -71,11 +72,24 @@ public class QueryRequestHandler implements RequestHandler<APIGatewayProxyReques
             response.setHeaders(Map.of("Content-Type", "application/json"));
             response.setBody("{\"error\": \"" + e.getMessage() + "\"}");
         } catch (Exception e) {
-            log.error("Got exception: " + e.getMessage());
+            String errorMessage = e.getMessage();
+            Throwable cause = e.getCause();
+            String causeMessage = (cause != null) ? cause.getMessage() : "No cause available";
+
+            log.error("Got exception: " + errorMessage + ". Cause: " + causeMessage);
+
             response.setStatusCode(500); // Internal Server Error
             response.setHeaders(Map.of("Content-Type", "application/json"));
-            response.setBody("{\"error\": \"" + e.getMessage() + "\"}");
+
+            String responseBody = String.format(
+                    "{\"error\": \"%s\", \"cause\": \"%s\"}",
+                    errorMessage.replace("\"", "\\\""), // Escape quotes in the error message
+                    causeMessage.replace("\"", "\\\"")  // Escape quotes in the cause message
+            );
+
+            response.setBody(responseBody);
         }
+
         return response;
     }
 }
