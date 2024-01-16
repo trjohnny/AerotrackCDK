@@ -72,7 +72,6 @@ public class FlightRefreshWorkflow {
                 flightAndPrice.add(flightList);
                 conversionRate.put(flightList.getCurrency(), null);
                 totalSuccess++;
-                log.info("Success: {}", i);
             } catch (HttpException httpException) {
                 log.error("HttpException caught: {}", httpException.message());
                 if (httpException.code() == 400) break;
@@ -81,11 +80,13 @@ public class FlightRefreshWorkflow {
             }
         }
 
+        log.info("Total successful requests: " + totalSuccess);
+
         conversionRate.replaceAll((c, v) -> currencyConverter.getConversionFactor(c, "eur"));
 
         for(FlightList flightList : flightAndPrice) {
             for(Flight flight : flightList.getFlights()) {
-                flight.setPrice(flight.getPrice()*conversionRate.get(flightList.getCurrency()));
+                flight.setPrice(flight.getPrice() * conversionRate.get(flightList.getCurrency()));
             }
             writeFlightsToTable(flightList.getFlights()); // there's a limit to the batch size
         }

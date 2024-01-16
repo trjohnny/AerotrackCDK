@@ -26,8 +26,9 @@ public class FlightRefreshRequestHandler implements RequestHandler<ScheduledEven
 
         try {
             flightRefreshWorkflow.refreshFlights();
-        } catch (IOException | NullPointerException | InterruptedException exc) {
+        } catch (IOException | InterruptedException exc) {
             log.error("An exception occurred: " + exc);
+            log.error("Caused by: ", exc.getCause());
         }
 
         return null;
