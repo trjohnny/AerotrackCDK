@@ -37,7 +37,7 @@ public class AirportsRefreshWorkflow  {
     private final AerotrackS3Client s3Client;
     private final RyanairApiClient ryanairClient;
 
-    public void refreshFlights() throws IOException {
+    public void refreshAirports() throws IOException {
         // Get a random airport using the Ryanair API
         List<Airport> airportList = filterSelectedAirports(ryanairClient.getAvailableAirports());
         List<Airport> currentAirports = getAvailableAirports().getAirports();
@@ -89,13 +89,13 @@ public class AirportsRefreshWorkflow  {
         return savedAirports;
     }
 
-    public List<Airport> filterSelectedAirports(List<Airport> airports) {
+    private List<Airport> filterSelectedAirports(List<Airport> airports) {
         return airports.stream()
                 .filter(airport -> isInEnum(airport.getAirportCode()))
                 .collect(Collectors.toList());
     }
 
-    public List<String> filterSelectedAirportsCodes(List<String> airports) {
+    private List<String> filterSelectedAirportsCodes(List<String> airports) {
         return airports.stream()
                 .filter(this::isInEnum)
                 .collect(Collectors.toList());

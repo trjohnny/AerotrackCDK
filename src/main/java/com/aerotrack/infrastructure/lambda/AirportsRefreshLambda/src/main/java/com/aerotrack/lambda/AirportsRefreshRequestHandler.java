@@ -21,11 +21,13 @@ public class AirportsRefreshRequestHandler implements RequestHandler<ScheduledEv
     public Void handleRequest(ScheduledEvent event, Context context) {
 
         try {
-            airportsRefreshWorkflow.refreshFlights();
+            airportsRefreshWorkflow.refreshAirports();
         }
-        catch (IOException | NullPointerException exc) {
+        catch (IOException exc) {
             log.error("An exception occurred: " + exc);
-        }
+            log.error("Caused by: ", exc.getCause());
+        } // If other exceptions occur we would not be able to handle them, hence we propagate them to the caller
+        // to see them in CW logs
 
         return null;
     }
