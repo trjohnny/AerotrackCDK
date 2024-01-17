@@ -133,7 +133,7 @@ public class QueryLambdaWorkflow {
     private int calculateDuration(Flight outboundFlight, Flight returnFlight) {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
-        LocalDate departureDate = LocalDate.parse(outboundFlight.getDepartureDateTime(), formatter);
+        LocalDate departureDate = LocalDate.parse(outboundFlight.getArrivalDateTime(), formatter);
         LocalDate returnDate = LocalDate.parse(returnFlight.getDepartureDateTime(), formatter);
 
         return Period.between(departureDate, returnDate).getDays();
