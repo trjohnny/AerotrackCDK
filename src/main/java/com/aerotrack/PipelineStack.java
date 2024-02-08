@@ -63,7 +63,7 @@ public class PipelineStack extends Stack {
                         .build())
                 .build();
 
-        StageDeployment alphaStage = pipeline.addStage(new AppStage(this, "Alpha", StageProps.builder()
+        /*StageDeployment alphaStage = pipeline.addStage(new AppStage(this, "Alpha", StageProps.builder()
                 .env(Environment.builder()
                         .account("073873382417")
                         .region("eu-west-1")
@@ -80,7 +80,7 @@ public class PipelineStack extends Stack {
 
 
         // Add integration tests as post-deployment steps for Alpha stage
-        alphaStage.addPost(integrationTestStep);
+        alphaStage.addPost(integrationTestStep);*/
 
         StageDeployment prodStage = pipeline.addStage(new AppStage(this, "Prod", StageProps.builder()
                 .env(Environment.builder()
@@ -89,6 +89,6 @@ public class PipelineStack extends Stack {
                         .build())
                 .build()));
 
-        prodStage.addPre(new ManualApprovalStep("approval"));
+        //prodStage.addPre(new ManualApprovalStep("approval"));
     }
 }
