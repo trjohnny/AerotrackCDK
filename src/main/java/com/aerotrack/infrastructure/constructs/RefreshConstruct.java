@@ -35,7 +35,7 @@ public class RefreshConstruct extends Construct {
 
 
     private static final Integer AIRPORTS_REFRESH_EVENT_RATE_HOURS = 24;
-    private static final Integer FLIGHTS_REFRESH_EVENT_RATE_MINUTES = 9;
+    private static final Integer FLIGHTS_REFRESH_EVENT_RATE_MINUTES = 15;
     private static final Integer FLIGHTS_REFRESH_LAMBDAS_PER_EVENT = 5;
 
     public RefreshConstruct(@NotNull Construct scope, @NotNull String id, Bucket airportsBucket, Table flightsTable) {
