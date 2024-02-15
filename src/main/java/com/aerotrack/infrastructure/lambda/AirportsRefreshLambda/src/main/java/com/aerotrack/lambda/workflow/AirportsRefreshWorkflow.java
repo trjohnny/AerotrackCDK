@@ -31,7 +31,7 @@ public class AirportsRefreshWorkflow  {
         CPH, SVO, DME, ORY, ARN, ZRH, VIE, MAN, ATH, LIS,
         OSL, HEL, DUB, BRU, TXL, MXP, GVA, PRG, WAW, DUS,
         BUD, OTP, MLA, STR, TSF, TRS, HAM, VCE, EIN, STN,
-        VLC, NCE, BLQ, NAP, BHX, GLA, LBA, EDI, BRS, SEN
+        VLC, NCE, BLQ, NAP, BHX, GLA, LBA, EDI, BRS, SEN, LPA, TFS, TFN, ACE, PMI, JTR, JMK
     }
 
     private final AerotrackS3Client s3Client;
