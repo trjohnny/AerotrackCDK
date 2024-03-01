@@ -4,9 +4,12 @@ import com.aerotrack.model.entities.Flight;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.AirportsJsonFile;
 import com.aerotrack.model.entities.FlightList;
-import com.aerotrack.utils.Constants;
+import com.aerotrack.model.exceptions.DirectionNotAvailableException;
+import com.aerotrack.common.Constants;
+import com.aerotrack.utils.clients.api.AirlineApiClient;
 import com.aerotrack.utils.clients.api.CurrencyConverterApiClient;
 import com.aerotrack.utils.clients.api.RyanairApiClient;
+import com.aerotrack.utils.clients.api.WizzairApiClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,75 +34,99 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static com.aerotrack.utils.Constants.AIRPORTS_OBJECT_NAME;
-
-
 @Slf4j
 public class FlightRefreshWorkflow {
 
+    private static final String RYANAIR_API_CALLS = "RyanairApiCalls";
+    private static final String WIZZAIR_API_CALLS = "WizzairApiCalls";
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final AerotrackS3Client s3Client;
     private final RyanairApiClient ryanairClient;
+    private final WizzairApiClient wizzairApiClient;
     private final DynamoDbTable<Flight> flightsTable;
     private final CurrencyConverterApiClient currencyConverter;
-
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
-    public static final int MAX_REQUESTS_PER_LAMBDA = 900;
+    public static final int MAX_REQUESTS_PER_LAMBDA = 800;
+    public static final String AIRPORTS_OBJECT_NAME = "airports.json";
+    public static final String METRIC_REFRESH_FLIGHTS_NAMESPACE = "RefreshLambdaMetric";
 
-    public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient, RyanairApiClient ryanairClient, CurrencyConverterApiClient currencyConverter) {
+    public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient,
+                                 RyanairApiClient ryanairClient, WizzairApiClient wizzairApiClient,
+                                 CurrencyConverterApiClient currencyConverter) {
         this.s3Client = s3Client;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
         this.ryanairClient = ryanairClient;
+        this.wizzairApiClient = wizzairApiClient;
         this.currencyConverter = currencyConverter;
         this.flightsTable = dynamoDbEnhancedClient.table(System.getenv(Constants.FLIGHT_TABLE_ENV_VAR), TableSchema.fromBean(Flight.class));
     }
+
     public void refreshFlights() throws IOException, InterruptedException {
+        AirportsJsonFile airportJsonFile = getAvailableAirports();
 
-        AirportsJsonFile airportList = getAvailableAirports();
-        Pair<String, String> randomConnection;
-        LocalDate randomDate;
-
-        List<FlightList> flightAndPrice = new ArrayList<>();
+        List<FlightList> flightsAndPrices = new ArrayList<>();
         Map<String, Double> conversionRate = new HashMap<>();
 
-        int totalSuccess = 0;
-        for (int i = 0; i < MAX_REQUESTS_PER_LAMBDA; i++) {
+        List<FlightList> ryanairFlightsAndPrices = fetchFlights(airportJsonFile, conversionRate, ryanairClient, "Ryanair");
+        List<FlightList> wizzairFlightsAndPrices = fetchFlights(airportJsonFile, conversionRate, wizzairApiClient, "Wizzair");
 
+        recordMetric(ryanairFlightsAndPrices.size(), RYANAIR_API_CALLS);
+        recordMetric(wizzairFlightsAndPrices.size(), WIZZAIR_API_CALLS);
+
+        flightsAndPrices.addAll(ryanairFlightsAndPrices);
+        flightsAndPrices.addAll(wizzairFlightsAndPrices);
+
+        System.out.println(ryanairFlightsAndPrices);
+        System.out.println(wizzairFlightsAndPrices);
+        System.out.println(conversionRate);
+        updateConversionRates(conversionRate);
+
+        flightsAndPrices.forEach(flightList -> {
+            double conversionFactor = conversionRate.getOrDefault(flightList.getCurrency(), 1.0);
+            flightList.getFlights().forEach(flight -> flight.setPrice(flight.getPrice() * conversionFactor));
+            writeFlightsToTable(flightList.getFlights());
+        });
+    }
+
+    private List<FlightList> fetchFlights(AirportsJsonFile airportList, Map<String, Double> conversionRate, AirlineApiClient apiClient, String airline) {
+        List<FlightList> flightsAndPrices = new ArrayList<>();
+        int totalSuccess = 0;
+
+        for (int i = 0; i < MAX_REQUESTS_PER_LAMBDA; i++) {
             try {
-                randomConnection = getRandomAirportPair(airportList);
-                randomDate = LocalDate.now().plusDays(pickNumberWithWeightedProbability(0, 365));
-                FlightList flightList = ryanairClient.getFlights(randomConnection.left(), randomConnection.right(), randomDate);
-                flightAndPrice.add(flightList);
-                conversionRate.put(flightList.getCurrency(), null);
+                Pair<String, String> randomConnection = getRandomAirportPair(airportList);
+                LocalDate randomDate = LocalDate.now().plusDays(pickNumberWithWeightedProbability(1, 365));
+                FlightList flightList = apiClient.getFlights(randomConnection.left(), randomConnection.right(), randomDate);
+                flightsAndPrices.add(flightList);
+                conversionRate.putIfAbsent(flightList.getCurrency().toLowerCase(), null);
                 totalSuccess++;
             } catch (HttpException httpException) {
                 log.error("HttpException caught: {}", httpException.message());
                 if (httpException.code() == 400) break;
+            } catch (DirectionNotAvailableException directionNotAvailableException) {
+                log.warn("DirectionNotAvailableException occurred: " + directionNotAvailableException.getMessage());
             } catch (RuntimeException e) {
-                log.error("A RuntimeException exception occurred for the single request: " + e);
+                log.error("RuntimeException occurred: ", e);
             }
         }
 
-        log.info("Total successful requests: " + totalSuccess);
+        log.info("Total successful {} requests: {}", airline, totalSuccess);
+        return flightsAndPrices;
+    }
 
-        conversionRate.replaceAll((c, v) -> currencyConverter.getConversionFactor(c, "eur"));
+    private void updateConversionRates(Map<String, Double> conversionRate) {
+        conversionRate.keySet().forEach(currency ->
+                conversionRate.put(currency, currencyConverter.getConversionFactor(currency, "eur")));
+    }
 
-        for(FlightList flightList : flightAndPrice) {
-            for(Flight flight : flightList.getFlights()) {
-                flight.setPrice(flight.getPrice() * conversionRate.get(flightList.getCurrency()));
-            }
-            writeFlightsToTable(flightList.getFlights()); // there's a limit to the batch size
-        }
-
-
+    private void recordMetric(int totalApiCalls, String metricName) {
         PutMetricDataRequest request = PutMetricDataRequest.builder()
-                .namespace(Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
-                .metricData(
-                        List.of(MetricDatum.builder()
-                        .metricName(Constants.METRIC_REFRESH_FLIGHTS_API_CALLS)
-                        .value(totalSuccess+0.0)
+                .namespace(METRIC_REFRESH_FLIGHTS_NAMESPACE)
+                .metricData(MetricDatum.builder()
+                        .metricName(metricName)
+                        .value((double) totalApiCalls)
                         .timestamp(Instant.now())
-                        .build()))
+                        .build())
                 .build();
 
         try (CloudWatchClient cw = CloudWatchClient.create()) {
@@ -114,21 +141,39 @@ public class FlightRefreshWorkflow {
     }
 
     private void writeFlightsToTable(List<Flight> flights) {
-        if(flights.isEmpty())
+        if (flights.isEmpty()) {
             return;
-
-        WriteBatch.Builder<Flight> builder = WriteBatch.builder(Flight.class).mappedTableResource(flightsTable);
-
-        for (Flight flight : flights) {
-            builder.addPutItem(flight);
         }
 
-        BatchWriteItemEnhancedRequest batchWriteItemEnhancedRequest = BatchWriteItemEnhancedRequest.builder()
-                .writeBatches(builder.build())
-                .build();
+        final int MAX_BATCH_SIZE = 25;
 
-        dynamoDbEnhancedClient.batchWriteItem(batchWriteItemEnhancedRequest);
+        // Calculate the number of batches needed
+        int totalBatches = (flights.size() + MAX_BATCH_SIZE - 1) / MAX_BATCH_SIZE;
+
+        for (int i = 0; i < totalBatches; i++) {
+            // Determine the sublist for the current batch
+            int start = i * MAX_BATCH_SIZE;
+            int end = Math.min((i + 1) * MAX_BATCH_SIZE, flights.size());
+            List<Flight> batchFlights = flights.subList(start, end);
+
+            // Create a new builder for each batch
+            WriteBatch.Builder<Flight> batchBuilder = WriteBatch.builder(Flight.class).mappedTableResource(flightsTable);
+
+            // Add items to the batch
+            for (Flight flight : batchFlights) {
+                batchBuilder.addPutItem(flight);
+            }
+
+            // Build the batch write request
+            BatchWriteItemEnhancedRequest batchWriteItemEnhancedRequest = BatchWriteItemEnhancedRequest.builder()
+                    .writeBatches(batchBuilder.build())
+                    .build();
+
+            // Execute the batch write operation
+            dynamoDbEnhancedClient.batchWriteItem(batchWriteItemEnhancedRequest);
+        }
     }
+
 
     public int pickNumberWithWeightedProbability(int min, int max) {
         Random random = new Random();
@@ -181,5 +226,3 @@ public class FlightRefreshWorkflow {
         return 1.0 / (1 + (DAY_PICK_WEIGHT_FACTOR * (1.0 / 365) * delayDays));
     }
 }
-
-

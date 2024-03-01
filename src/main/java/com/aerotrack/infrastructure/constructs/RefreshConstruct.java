@@ -105,7 +105,8 @@ public class RefreshConstruct extends Construct {
         Role lambdaRole = Role.Builder.create(this, InfraUtils.getResourceName(roleName))
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(List.of(
-                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
+                        ManagedPolicy.fromAwsManagedPolicyName("CloudWatchFullAccess")
                 ))
                 .build();
 
