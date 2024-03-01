@@ -79,9 +79,17 @@ public class RefreshConstruct extends Construct {
                     .targets(List.of(new LambdaFunction(airportsRefreshLambda)))
                     .build();
 
-            Metric apiCallMetric = Metric.Builder.create()
+            Metric ryanairApiCallMetric = Metric.Builder.create()
                     .namespace(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
-                    .metricName(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_API_CALLS)
+                    .metricName("RyanairApiCalls")
+                    .statistic("Sum")
+                    .unit(Unit.COUNT)
+                    .period(Duration.hours(1))
+                    .build();
+
+            Metric wizzairApiCallMetric = Metric.Builder.create()
+                    .namespace(com.aerotrack.utils.Constants.METRIC_REFRESH_FLIGHTS_NAMESPACE)
+                    .metricName("WizzairApiCalls")
                     .statistic("Sum")
                     .unit(Unit.COUNT)
                     .period(Duration.hours(1))
@@ -94,7 +102,14 @@ public class RefreshConstruct extends Construct {
 
             dashboard.addWidgets(new GraphWidget(GraphWidgetProps.builder()
                     .title("Ryanair API Calls")
-                    .left(List.of(apiCallMetric))
+                    .left(List.of(ryanairApiCallMetric))
+                    .width(20)
+                    .height(10)
+                    .build()));
+
+            dashboard.addWidgets(new GraphWidget(GraphWidgetProps.builder()
+                    .title("Wizzair API Calls")
+                    .left(List.of(wizzairApiCallMetric))
                     .width(20)
                     .height(10)
                     .build()));
