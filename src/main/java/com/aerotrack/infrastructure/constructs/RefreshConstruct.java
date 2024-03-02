@@ -135,7 +135,7 @@ public class RefreshConstruct extends Construct {
                         .build()))
                 .environment(env)
                 .role(lambdaRole)
-                .timeout(Duration.minutes(5))
+                .timeout(Duration.minutes(7))
                 .memorySize(256)
                 .logRetention(RetentionDays.ONE_DAY)
                 .handler(InfraUtils.getLambdaRequestHandler(lambdaName))
