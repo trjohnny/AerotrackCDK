@@ -1,5 +1,6 @@
 package com.aerotrack.lambda.workflow;
 
+import com.aerotrack.model.entities.Airline;
 import com.aerotrack.model.entities.Flight;
 import com.aerotrack.model.entities.Airport;
 import com.aerotrack.model.entities.AirportsJsonFile;
@@ -46,8 +47,10 @@ public class FlightRefreshWorkflow {
     private final DynamoDbTable<Flight> flightsTable;
     private final CurrencyConverterApiClient currencyConverter;
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
-    public static final int MAX_REQUESTS_PER_LAMBDA = 800;
-    public static final String AIRPORTS_OBJECT_NAME = "airports.json";
+    public static final int MAX_RYANAIR_REQUESTS_PER_LAMBDA = 500;
+    public static final int MAX_WIZZAIR_REQUESTS_PER_LAMBDA = 200;
+    public static final String RYANAIR_CONNECTIONS_OBJECT_NAME = "ryanair_airports.json";
+    public static final String WIZZAIR_CONNECTIONS_OBJECT_NAME = "wizzair_airports.json";
     public static final String METRIC_REFRESH_FLIGHTS_NAMESPACE = "RefreshLambdaMetric";
 
     public FlightRefreshWorkflow(AerotrackS3Client s3Client, DynamoDbEnhancedClient dynamoDbEnhancedClient,
@@ -62,13 +65,14 @@ public class FlightRefreshWorkflow {
     }
 
     public void refreshFlights() throws IOException, InterruptedException {
-        AirportsJsonFile airportJsonFile = getAvailableAirports();
+        AirportsJsonFile ryanairAirportJsonFile = getAvailableAirports(RYANAIR_CONNECTIONS_OBJECT_NAME);
+        AirportsJsonFile wizzairAirportJsonFile = getAvailableAirports(WIZZAIR_CONNECTIONS_OBJECT_NAME);
 
         List<FlightList> flightsAndPrices = new ArrayList<>();
         Map<String, Double> conversionRate = new HashMap<>();
 
-        List<FlightList> ryanairFlightsAndPrices = fetchFlights(airportJsonFile, conversionRate, ryanairClient, "Ryanair");
-        List<FlightList> wizzairFlightsAndPrices = fetchFlights(airportJsonFile, conversionRate, wizzairApiClient, "Wizzair");
+        List<FlightList> ryanairFlightsAndPrices = fetchFlights(ryanairAirportJsonFile, conversionRate, ryanairClient, "Ryanair");
+        List<FlightList> wizzairFlightsAndPrices = fetchFlights(wizzairAirportJsonFile, conversionRate, wizzairApiClient, "Wizzair");
 
         recordMetric(ryanairFlightsAndPrices.size(), RYANAIR_API_CALLS);
         recordMetric(wizzairFlightsAndPrices.size(), WIZZAIR_API_CALLS);
@@ -76,9 +80,6 @@ public class FlightRefreshWorkflow {
         flightsAndPrices.addAll(ryanairFlightsAndPrices);
         flightsAndPrices.addAll(wizzairFlightsAndPrices);
 
-        System.out.println(ryanairFlightsAndPrices);
-        System.out.println(wizzairFlightsAndPrices);
-        System.out.println(conversionRate);
         updateConversionRates(conversionRate);
 
         flightsAndPrices.forEach(flightList -> {
@@ -92,7 +93,7 @@ public class FlightRefreshWorkflow {
         List<FlightList> flightsAndPrices = new ArrayList<>();
         int totalSuccess = 0;
 
-        for (int i = 0; i < MAX_REQUESTS_PER_LAMBDA; i++) {
+        for (int i = 0; i < getMaxRequests(Airline.fromName(airline)); i++) {
             try {
                 Pair<String, String> randomConnection = getRandomAirportPair(airportList);
                 LocalDate randomDate = LocalDate.now().plusDays(pickNumberWithWeightedProbability(1, 365));
@@ -112,6 +113,13 @@ public class FlightRefreshWorkflow {
 
         log.info("Total successful {} requests: {}", airline, totalSuccess);
         return flightsAndPrices;
+    }
+
+    private int getMaxRequests(Airline airline) {
+        return switch (airline) {
+            case RYANAIR -> MAX_RYANAIR_REQUESTS_PER_LAMBDA;
+            case WIZZAIR -> MAX_WIZZAIR_REQUESTS_PER_LAMBDA;
+        };
     }
 
     private void updateConversionRates(Map<String, Double> conversionRate) {
@@ -134,9 +142,9 @@ public class FlightRefreshWorkflow {
         }
     }
 
-    public AirportsJsonFile getAvailableAirports() throws IOException {
+    public AirportsJsonFile getAvailableAirports(String connectionsFileName) throws IOException {
 
-        String airportsJson = s3Client.getStringObjectFromS3(AIRPORTS_OBJECT_NAME);
+        String airportsJson = s3Client.getStringObjectFromS3(connectionsFileName);
         return new ObjectMapper().readValue(airportsJson, new TypeReference<>() {});
     }
 

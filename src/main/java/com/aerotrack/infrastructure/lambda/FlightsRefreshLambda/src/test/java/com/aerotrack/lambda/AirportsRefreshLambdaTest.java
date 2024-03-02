@@ -72,7 +72,7 @@ class AirportsRefreshLambdaTest {
     void getAvailableAirports_SuccessfulRequest_CorrectMapping() {
 
         assertDoesNotThrow(() -> {
-            List<Airport> airports = flightRefreshWorkflow.getAvailableAirports().getAirports();
+            List<Airport> airports = flightRefreshWorkflow.getAvailableAirports("any.json").getAirports();
             assertNotNull(airports);
             assertFalse(airports.isEmpty());
             assertEquals("VIE", airports.get(0).getAirportCode());
@@ -90,7 +90,7 @@ class AirportsRefreshLambdaTest {
 
         flightRefreshWorkflow.refreshFlights();
 
-        verify(mockRyanairClient, times(FlightRefreshWorkflow.MAX_REQUESTS_PER_LAMBDA)).getFlights(anyString(), anyString(), any(LocalDate.class));
+        verify(mockRyanairClient, times(FlightRefreshWorkflow.MAX_RYANAIR_REQUESTS_PER_LAMBDA)).getFlights(anyString(), anyString(), any(LocalDate.class));
     }
 
     @Test
