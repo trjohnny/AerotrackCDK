@@ -48,7 +48,7 @@ public class FlightRefreshWorkflow {
     private final CurrencyConverterApiClient currencyConverter;
     private static final int DAY_PICK_WEIGHT_FACTOR = 30;
     public static final int MAX_RYANAIR_REQUESTS_PER_LAMBDA = 500;
-    public static final int MAX_WIZZAIR_REQUESTS_PER_LAMBDA = 200;
+    public static final int MAX_WIZZAIR_REQUESTS_PER_LAMBDA = 50;
     public static final String RYANAIR_CONNECTIONS_OBJECT_NAME = "ryanair_airports.json";
     public static final String WIZZAIR_CONNECTIONS_OBJECT_NAME = "wizzair_airports.json";
     public static final String METRIC_REFRESH_FLIGHTS_NAMESPACE = "RefreshLambdaMetric";
