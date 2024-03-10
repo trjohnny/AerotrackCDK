@@ -92,12 +92,17 @@ public class  ApiConstruct extends Construct {
 
         airportsBucket.grantRead(Objects.requireNonNull(fetchAirportsFunction.getRole()));
 
-        Resource getAirportsResource = queryRestApi.getRoot().addResource("airports");
+        Resource airportsResource = queryRestApi.getRoot().addResource("airports");
+        Resource getRyanairAirportsResource = airportsResource.addResource("ryanair");
+        Resource getWizzairAirportsResource = airportsResource.addResource("wizzair");
 
-        getAirportsResource.addMethod("GET", new LambdaIntegration(fetchAirportsFunction), MethodOptions.builder()
+        getRyanairAirportsResource.addMethod("GET", new LambdaIntegration(fetchAirportsFunction), MethodOptions.builder()
                 .apiKeyRequired(true)
                 .build());
 
+        getWizzairAirportsResource.addMethod("GET", new LambdaIntegration(fetchAirportsFunction), MethodOptions.builder()
+                .apiKeyRequired(true)
+                .build());
     }
 
     private Function getApiLambda(String functionName, Map<String, String> env) {
