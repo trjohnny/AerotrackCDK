@@ -1,5 +1,7 @@
 package com.aerotrack.lambda;
 
+import com.aerotrack.model.entities.Airport;
+import com.aerotrack.model.entities.AirportsJsonFile;
 import com.aerotrack.model.entities.Flight;
 import com.aerotrack.model.entities.Trip;
 import com.aerotrack.model.protocol.ScanQueryRequest;
@@ -18,8 +20,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -40,31 +44,21 @@ class QueryLambdaTest {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final String startDateString = today.format(formatter);
     private final String endDateString = tenDaysLater.format(formatter);
-    private final static String AIRPORT_JSON_STRING = """
-            {
-              "airports":
-                [
-                  {
-                    "airportCode" : "VIE",
-                    "name" : "Vienna",
-                    "countryCode" : "AT",
-                    "connections" : ["TSF"]
-                  },
-                  {
-                    "airportCode" : "TSF",
-                    "name" : "Venice (Treviso)",
-                    "countryCode" : "IT",
-                    "connections" : ["VIE"]
-                  }
+    private Set<Airport> getGenericAirportsSet() {
+        Set<Airport> airportSet = new HashSet<>();
+        airportSet.add(new Airport("VIE", "Vienna", "AT", List.of("TSF"), "2021-01-03T10:48:17.000"));
+        airportSet.add(new Airport("TSF", "Venice (Treviso)", "IT", List.of("VIE"), "2021-01-03T10:48:17.000"));
+        return airportSet;
+    }
 
-                ]
-            }
-            """;
+    private AirportsJsonFile getMergedAirportsJsonFile() {
+        return new AirportsJsonFile(getGenericAirportsSet());
+    }
 
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-        when(mockS3Client.getStringObjectFromS3(any())).thenReturn(AIRPORT_JSON_STRING);
+        when(mockS3Client.getMergedAirports()).thenReturn(getMergedAirportsJsonFile());
         queryLambdaWorkflow = new QueryLambdaWorkflow(mockDynamoDbClient, mockS3Client);
     }
 
@@ -165,8 +159,8 @@ class QueryLambdaTest {
                 .thenReturn(getGenericSecondFlights());
 
         ScanQueryRequest request = ScanQueryRequest.builder()
-                .minDays(0)
-                .maxDays(0)
+                .minDays(1)
+                .maxDays(1)
                 .availabilityStart(startDateString)
                 .availabilityEnd(endDateString)
                 .returnToSameAirport(true)

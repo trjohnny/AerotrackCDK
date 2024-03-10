@@ -7,7 +7,7 @@ import com.aerotrack.model.protocol.ScanQueryResponse;
 import com.aerotrack.model.entities.AirportsJsonFile;
 import com.aerotrack.utils.clients.dynamodb.AerotrackDynamoDbClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
-import com.aerotrack.utils.Constants;
+import com.aerotrack.common.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,12 +43,11 @@ public class QueryLambdaWorkflow {
                                                     List<String> departureAirports, List<String> destinationAirports, Integer maxChanges,
                                                     Optional<Integer> minTimeBetweenChangesHours, Optional<Integer> maxTimeBetweenChangesHours,
                                                     Boolean returnToSameAirport) throws IOException {
-        AirportsJsonFile airportsJsonFile = objectMapper.readValue(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME), AirportsJsonFile.class);
-        List<Airport> airportList = airportsJsonFile.getAirports();
+        AirportsJsonFile airportsJsonFile = s3Client.getMergedAirports();
 
         // This map is used to check the existence of every airport in the request and their possible connections.
         // In this way we limit the number of calls to DynamoDB
-        Map<String, Set<String>> airportsConnections = getAirportConnectionsMap(airportList);
+        Map<String, Set<String>> airportsConnections = getAirportConnectionsMap(airportsJsonFile.getAirports());
 
         List<Trip> trips = new ArrayList<>();
         Map<String, List<Flight>> allReturnFlights = new HashMap<>();
@@ -118,10 +117,10 @@ public class QueryLambdaWorkflow {
                 .build();
     }
 
-    private Map<String, Set<String>> getAirportConnectionsMap(List<Airport> airportList) {
+    private Map<String, Set<String>> getAirportConnectionsMap(Set<Airport> airportSet) {
         Map<String, Set<String>> airportsConnections = new HashMap<>();
 
-        for (Airport airport : airportList) {
+        for (Airport airport : airportSet) {
             String airportCode = airport.getAirportCode();
             Set<String> connectionsSet = new HashSet<>(airport.getConnections());
             airportsConnections.put(airportCode, connectionsSet);
