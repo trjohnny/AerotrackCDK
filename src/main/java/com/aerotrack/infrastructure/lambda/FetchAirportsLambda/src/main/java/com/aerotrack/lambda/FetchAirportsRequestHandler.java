@@ -23,21 +23,23 @@ public class FetchAirportsRequestHandler implements RequestHandler<APIGatewayPro
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         String resourcePath = request.getPath(); // Get the resource path from the request
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
-
-        // Determine the S3 object name based on the requested resource path
-        String s3ObjectName;
-        if (resourcePath.contains("ryanair")) {
-            s3ObjectName = Constants.RYANAIR_AIRPORTS_OBJECT_NAME; // Assuming you have a constant for Ryanair's filename
-        } else if (resourcePath.contains("wizzair")) {
-            s3ObjectName = Constants.WIZZAIR_AIRPORTS_OBJECT_NAME; // Assuming you have a constant for Wizzair's filename
-        } else {
-            response.setStatusCode(400); // Bad Request
-            response.setBody("{\"error\": \"Invalid airport group specified.\"}");
-            return response;
-        }
+        AirportsJsonFile airportsJsonFile;
 
         try {
-            AirportsJsonFile airportsJsonFile = objectMapper.readValue(s3Client.getStringObjectFromS3(s3ObjectName), AirportsJsonFile.class);
+
+            String s3ObjectName;
+            if (resourcePath.contains("ryanair")) {
+                airportsJsonFile = s3Client.getRyanairAirports();
+            } else if (resourcePath.contains("wizzair")) {
+                airportsJsonFile = s3Client.getWizzairAirports();
+            } else if (resourcePath.contains("merged")) {
+                airportsJsonFile = s3Client.getMergedAirports();
+            } else {
+                response.setStatusCode(400); // Bad Request
+                response.setBody("{\"error\": \"Invalid airport group specified.\"}");
+                return response;
+            }
+
             response.setStatusCode(200);
             response.setHeaders(Map.of(
                     "Content-Type", "application/json",
