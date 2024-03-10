@@ -1,7 +1,7 @@
 package com.aerotrack.lambda;
 
 import com.aerotrack.model.entities.AirportsJsonFile;
-import com.aerotrack.utils.Constants;
+import com.aerotrack.common.Constants;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -21,10 +21,23 @@ public class FetchAirportsRequestHandler implements RequestHandler<APIGatewayPro
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+        String resourcePath = request.getPath(); // Get the resource path from the request
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
 
+        // Determine the S3 object name based on the requested resource path
+        String s3ObjectName;
+        if (resourcePath.contains("ryanair")) {
+            s3ObjectName = Constants.RYANAIR_AIRPORTS_OBJECT_NAME; // Assuming you have a constant for Ryanair's filename
+        } else if (resourcePath.contains("wizzair")) {
+            s3ObjectName = Constants.WIZZAIR_AIRPORTS_OBJECT_NAME; // Assuming you have a constant for Wizzair's filename
+        } else {
+            response.setStatusCode(400); // Bad Request
+            response.setBody("{\"error\": \"Invalid airport group specified.\"}");
+            return response;
+        }
+
         try {
-            AirportsJsonFile airportsJsonFile = objectMapper.readValue(s3Client.getStringObjectFromS3(Constants.AIRPORTS_OBJECT_NAME), AirportsJsonFile.class);
+            AirportsJsonFile airportsJsonFile = objectMapper.readValue(s3Client.getStringObjectFromS3(s3ObjectName), AirportsJsonFile.class);
             response.setStatusCode(200);
             response.setHeaders(Map.of(
                     "Content-Type", "application/json",
