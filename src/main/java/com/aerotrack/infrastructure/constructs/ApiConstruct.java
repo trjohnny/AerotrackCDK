@@ -95,12 +95,17 @@ public class  ApiConstruct extends Construct {
         Resource airportsResource = queryRestApi.getRoot().addResource("airports");
         Resource getRyanairAirportsResource = airportsResource.addResource("ryanair");
         Resource getWizzairAirportsResource = airportsResource.addResource("wizzair");
+        Resource getAirportsResource = airportsResource.addResource("merged");
 
         getRyanairAirportsResource.addMethod("GET", new LambdaIntegration(fetchAirportsFunction), MethodOptions.builder()
                 .apiKeyRequired(true)
                 .build());
 
         getWizzairAirportsResource.addMethod("GET", new LambdaIntegration(fetchAirportsFunction), MethodOptions.builder()
+                .apiKeyRequired(true)
+                .build());
+
+        getAirportsResource.addMethod("GET", new LambdaIntegration(fetchAirportsFunction), MethodOptions.builder()
                 .apiKeyRequired(true)
                 .build());
     }
