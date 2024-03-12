@@ -28,7 +28,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AirportsRefreshLambdaTest {
+class FlightsRefreshLambdaTest {
 
     @Mock
     private AerotrackS3Client mockS3Client;

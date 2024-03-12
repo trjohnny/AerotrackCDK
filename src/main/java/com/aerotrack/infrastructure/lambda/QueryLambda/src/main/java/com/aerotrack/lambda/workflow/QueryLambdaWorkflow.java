@@ -7,7 +7,6 @@ import com.aerotrack.model.protocol.ScanQueryResponse;
 import com.aerotrack.model.entities.AirportsJsonFile;
 import com.aerotrack.utils.clients.dynamodb.AerotrackDynamoDbClient;
 import com.aerotrack.utils.clients.s3.AerotrackS3Client;
-import com.aerotrack.common.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
